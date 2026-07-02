@@ -11,6 +11,7 @@ export interface HistoryEntry {
 }
 
 const STORAGE_KEY = 'a11y-history'
+const LAST_RESULT_KEY = 'a11y-last-result'
 const MAX_ENTRIES = 10
 
 export function getHistory(): HistoryEntry[] {
@@ -55,6 +56,32 @@ export function addToHistory(result: ScanResult): HistoryEntry[] {
 export function clearHistory(): void {
   try {
     localStorage.removeItem(STORAGE_KEY)
+  } catch {
+    // ignore
+  }
+}
+
+export function getLastResult(): ScanResult | null {
+  try {
+    const raw = localStorage.getItem(LAST_RESULT_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as ScanResult
+  } catch {
+    return null
+  }
+}
+
+export function saveLastResult(result: ScanResult): void {
+  try {
+    localStorage.setItem(LAST_RESULT_KEY, JSON.stringify(result))
+  } catch {
+    // localStorage might be full or unavailable
+  }
+}
+
+export function clearLastResult(): void {
+  try {
+    localStorage.removeItem(LAST_RESULT_KEY)
   } catch {
     // ignore
   }

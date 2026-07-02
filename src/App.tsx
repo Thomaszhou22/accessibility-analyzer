@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { useState, useEffect, useCallback } from 'react'
 import type { ScanResult } from '@/engine/types'
 import { scanUrl, scanHtml } from '@/engine/scanner'
-import { getHistory, addToHistory, clearHistory, type HistoryEntry } from '@/lib/storage'
+import { getHistory, addToHistory, clearHistory, getLastResult, saveLastResult, clearLastResult, type HistoryEntry } from '@/lib/storage'
 
 export default function App() {
   const [result, setResult] = useState<ScanResult | null>(null)
@@ -17,6 +17,8 @@ export default function App() {
 
   useEffect(() => {
     setHistory(getHistory())
+    const last = getLastResult()
+    if (last) setResult(last)
   }, [])
 
   const handleScanUrl = useCallback(async (url: string) => {
@@ -25,6 +27,7 @@ export default function App() {
     try {
       const res = await scanUrl(url)
       setResult(res)
+      saveLastResult(res)
       const updated = addToHistory(res)
       setHistory(updated)
     } catch (err) {
@@ -40,6 +43,7 @@ export default function App() {
     try {
       const res = scanHtml(html)
       setResult(res)
+      saveLastResult(res)
       const updated = addToHistory(res)
       setHistory(updated)
     } catch (err) {
@@ -52,6 +56,7 @@ export default function App() {
   const handleReset = () => {
     setResult(null)
     setError(null)
+    clearLastResult()
   }
 
   const handleClearHistory = () => {
