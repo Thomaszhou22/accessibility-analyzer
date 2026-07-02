@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react'
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -6,9 +6,11 @@ import type { Issue, ScanResult } from '@/engine/types'
 
 interface IssueListProps {
   result: ScanResult
+  onIssueHover?: (selector: string | null) => void
+  onIssueClick?: (selector: string) => void
 }
 
-export default function IssueList({ result }: IssueListProps) {
+export default function IssueList({ result, onIssueHover, onIssueClick }: IssueListProps) {
   const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
@@ -50,6 +52,8 @@ export default function IssueList({ result }: IssueListProps) {
               issue={issue}
               expanded={expandedId === `${issue.id}-${i}`}
               onToggle={() => setExpandedId(expandedId === `${issue.id}-${i}` ? null : `${issue.id}-${i}`)}
+              onHover={onIssueHover}
+              onLocate={onIssueClick}
             />
           ))}
         </div>
@@ -122,7 +126,15 @@ function CodeBlock({ code }: { code: string }) {
   )
 }
 
-function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boolean; onToggle: () => void }) {
+interface IssueRowProps {
+  issue: Issue
+  expanded: boolean
+  onToggle: () => void
+  onHover?: (selector: string | null) => void
+  onLocate?: (selector: string) => void
+}
+
+function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProps) {
   const levelConfig = {
     error: { variant: 'error' as const, label: 'Error' },
     warning: { variant: 'warning' as const, label: 'Warning' },
@@ -130,8 +142,32 @@ function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boole
   }
   const cfg = levelConfig[issue.level]
 
+  const handleMouseEnter = () => {
+    if (onHover && issue.elementSelector) {
+      onHover(issue.elementSelector)
+    }
+  }
+
+  const handleMouseLeave = () => {
+    if (onHover) {
+      onHover(null)
+    }
+  }
+
+  const handleLocate = (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (onLocate && issue.elementSelector) {
+      onLocate(issue.elementSelector)
+    }
+  }
+
   return (
-    <div className="p-4 hover:bg-surface/50 transition-colors cursor-pointer" onClick={onToggle}>
+    <div
+      className="p-4 hover:bg-surface/50 transition-colors cursor-pointer"
+      onClick={onToggle}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={handleMouseLeave}
+    >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
@@ -142,12 +178,26 @@ function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boole
           <h4 className="text-sm font-medium text-white">{issue.title}</h4>
           {!expanded && <p className="text-xs text-muted mt-1 truncate">{issue.description}</p>}
         </div>
-        <svg
-          className={`w-4 h-4 text-muted shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
-          fill="none" viewBox="0 0 24 24" stroke="currentColor"
-        >
-          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-        </svg>
+        <div className="flex items-center gap-2 shrink-0">
+          {issue.elementSelector && onLocate && (
+            <button
+              onClick={handleLocate}
+              className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-primary hover:bg-primary/10 transition-all"
+              title="Locate in preview"
+            >
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10.5a3 3 0 11-6 0 3 3 0 016 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1115 0z" />
+              </svg>
+            </button>
+          )}
+          <svg
+            className={`w-4 h-4 text-muted transition-transform ${expanded ? 'rotate-180' : ''}`}
+            fill="none" viewBox="0 0 24 24" stroke="currentColor"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
       </div>
 
       {expanded && (

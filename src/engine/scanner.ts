@@ -286,6 +286,7 @@ export function scanHtml(html: string, url?: string): ScanResult {
     issues,
     scannedAt: new Date().toISOString(),
     durationMs: Math.round(endTime - startTime),
+    html,
   }
 }
 
@@ -332,6 +333,7 @@ export async function scanUrl(rawUrl: string): Promise<ScanResult> {
     scannedAt: new Date().toISOString(),
     durationMs: Math.round(endTime - startTime),
     fetchStrategy: strategy,
+    html,
   }
 }
 

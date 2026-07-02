@@ -2,6 +2,7 @@ import ScanInput from '@/components/ScanInput'
 import ScanHistory from '@/components/ScanHistory'
 import ScorePanel from '@/components/ScorePanel'
 import IssueList from '@/components/IssueList'
+import PreviewPanel from '@/components/PreviewPanel'
 import ReportLayout from '@/components/ReportLayout'
 import { Button } from '@/components/ui/Button'
 import { useState, useEffect, useCallback } from 'react'
@@ -15,6 +16,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [showHistory, setShowHistory] = useState(false)
+  const [highlightSelector, setHighlightSelector] = useState<string | null>(null)
+  const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     setHistory(getHistory())
@@ -29,6 +32,7 @@ export default function App() {
       const res = await scanUrl(url)
       setResult(res)
       saveLastResult(res)
+      setShowPreview(!!res.html)
       const updated = addToHistory(res)
       setHistory(updated)
     } catch (err) {
@@ -45,6 +49,7 @@ export default function App() {
       const res = scanHtml(html)
       setResult(res)
       saveLastResult(res)
+      setShowPreview(!!res.html)
       const updated = addToHistory(res)
       setHistory(updated)
     } catch (err) {
@@ -57,6 +62,8 @@ export default function App() {
   const handleReset = () => {
     setResult(null)
     setError(null)
+    setHighlightSelector(null)
+    setShowPreview(false)
     clearLastResult()
   }
 
@@ -82,6 +89,15 @@ export default function App() {
     window.print()
   }
 
+  const handleIssueHover = useCallback((selector: string | null) => {
+    setHighlightSelector(selector)
+  }, [])
+
+  const handleIssueClick = useCallback((selector: string) => {
+    setHighlightSelector(selector)
+    setShowPreview(true)
+  }, [])
+
   return (
     <div className="min-h-screen">
       {/* Hidden report layout for printing */}
@@ -89,7 +105,7 @@ export default function App() {
 
       {/* Header */}
       <header className="border-b border-border">
-        <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-primary to-accent flex items-center justify-center">
               <svg className="w-5 h-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -112,7 +128,7 @@ export default function App() {
       </header>
 
       {/* Main content */}
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-7xl mx-auto px-6 py-8">
         {!result && !loading && (
           <div className="text-center mb-8">
             <h2 className="text-3xl font-bold text-white mb-2">
@@ -175,6 +191,7 @@ export default function App() {
 
         {result && !loading && (
           <div className="space-y-4">
+            {/* Result header */}
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">Scan Results</h2>
@@ -191,6 +208,19 @@ export default function App() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
+                {result.html && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowPreview(!showPreview)}
+                  >
+                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                    {showPreview ? 'Hide Preview' : 'Show Preview'}
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={handleExportPdf}>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
@@ -204,13 +234,38 @@ export default function App() {
             </div>
 
             <ScorePanel result={result} />
-            <IssueList result={result} />
+
+            {/* Split view: preview + issues */}
+            {showPreview && result.html ? (
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                <div className="lg:order-1">
+                  <PreviewPanel
+                    html={result.html}
+                    baseUrl={result.url && result.url !== '(pasted HTML)' ? result.url : null}
+                    highlightSelector={highlightSelector}
+                  />
+                </div>
+                <div className="lg:order-2">
+                  <IssueList
+                    result={result}
+                    onIssueHover={handleIssueHover}
+                    onIssueClick={handleIssueClick}
+                  />
+                </div>
+              </div>
+            ) : (
+              <IssueList
+                result={result}
+                onIssueHover={handleIssueHover}
+                onIssueClick={handleIssueClick}
+              />
+            )}
           </div>
         )}
       </main>
 
       <footer className="border-t border-border mt-12">
-        <div className="max-w-5xl mx-auto px-6 py-4 text-center">
+        <div className="max-w-7xl mx-auto px-6 py-4 text-center">
           <p className="text-xs text-muted">
             Built for Web Champ Hackathon · Based on WCAG 2.1 Guidelines
           </p>
