@@ -84,7 +84,16 @@ const directStrategy: FetchStrategy = {
   }),
 }
 
-/** Strategy 2: allorigins.win */
+/** Strategy 2: Our own serverless proxy (Vercel function, most reliable) */
+const ownProxyStrategy: FetchStrategy = {
+  name: 'Proxy: server',
+  prepare: (url) => ({
+    reqUrl: `/api/proxy?url=${encodeURIComponent(url)}`,
+    init: { redirect: 'follow' },
+  }),
+}
+
+/** Strategy 3: allorigins.win */
 const allOriginsStrategy: FetchStrategy = {
   name: 'Proxy: allorigins',
   prepare: (url) => ({
@@ -93,7 +102,7 @@ const allOriginsStrategy: FetchStrategy = {
   }),
 }
 
-/** Strategy 3: corsproxy.io */
+/** Strategy 4: corsproxy.io */
 const corsProxyStrategy: FetchStrategy = {
   name: 'Proxy: corsproxy.io',
   prepare: (url) => ({
@@ -102,7 +111,7 @@ const corsProxyStrategy: FetchStrategy = {
   }),
 }
 
-/** Strategy 4: r.jina.ai reader proxy */
+/** Strategy 5: r.jina.ai reader proxy */
 const jinaReaderStrategy: FetchStrategy = {
   name: 'Proxy: jina reader',
   prepare: (url) => ({
@@ -116,7 +125,7 @@ const jinaReaderStrategy: FetchStrategy = {
   }),
 }
 
-/** Strategy 5: codetabs CORS proxy */
+/** Strategy 6: codetabs CORS proxy */
 const codetabsStrategy: FetchStrategy = {
   name: 'Proxy: codetabs',
   prepare: (url) => ({
@@ -125,7 +134,7 @@ const codetabsStrategy: FetchStrategy = {
   }),
 }
 
-/** Strategy 6: thingproxy */
+/** Strategy 7: thingproxy */
 const thingProxyStrategy: FetchStrategy = {
   name: 'Proxy: thingproxy',
   prepare: (url) => ({
@@ -137,6 +146,7 @@ const thingProxyStrategy: FetchStrategy = {
 /** Ordered list, tried in sequence until one succeeds. */
 const fetchStrategies: FetchStrategy[] = [
   directStrategy,
+  ownProxyStrategy,
   allOriginsStrategy,
   corsProxyStrategy,
   jinaReaderStrategy,
