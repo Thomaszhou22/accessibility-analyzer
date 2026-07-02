@@ -44,6 +44,17 @@ function countByLevel(issues: Issue[]): {
 }
 
 /**
+ * Assign a unique index to every element in the document.
+ * This allows us to reliably locate elements in the preview iframe.
+ */
+function assignElementIndices(doc: Document): void {
+  const allElements = doc.querySelectorAll('*')
+  allElements.forEach((el, index) => {
+    el.setAttribute('data-a11y-idx', String(index))
+  })
+}
+
+/**
  * Run all rules against a parsed Document and collect issues.
  */
 function runRules(doc: Document): Issue[] {
@@ -270,6 +281,8 @@ export function scanHtml(html: string, url?: string): ScanResult {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
 
+  assignElementIndices(doc)
+
   const issues = attachFixCodes(runRules(doc))
   const { errors, warnings, infos } = countByLevel(issues)
   const score = calculateScore(errors, warnings, infos)
@@ -311,6 +324,8 @@ export async function scanUrl(rawUrl: string): Promise<ScanResult> {
   if (!doc || !doc.documentElement) {
     throw new Error(`Failed to parse HTML from "${url}". The response may not be valid HTML.`)
   }
+
+  assignElementIndices(doc)
 
   console.debug(
     `[accessibility-analyzer] HTML parsed in ${(parseEnd - parseStart).toFixed(2)}ms (${html.length} chars)`

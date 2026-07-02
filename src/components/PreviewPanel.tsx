@@ -12,6 +12,13 @@ interface PreviewPanelProps {
 const HIGHLIGHT_SCRIPT = `
 <script>
 (function() {
+  // Assign indices to all elements (mirrors scanner's assignElementIndices)
+  var allEls = document.querySelectorAll('*');
+  for (var i = 0; i < allEls.length; i++) {
+    allEls[i].setAttribute('data-a11y-idx', String(i));
+  }
+
+  function clearHighlights() {
   function clearHighlights() {
     document.querySelectorAll('.a11y-hl-overlay, .a11y-hl-label').forEach(function(el) { el.remove(); });
     document.querySelectorAll('*').forEach(function(el) {

@@ -18,6 +18,7 @@ export interface Issue {
   recommendation: string
   fixCode?: string
   autoFix?: string
+  elementIndex?: number
 }
 
 // Full scan result for a page

@@ -82,6 +82,9 @@ function createIssue(
   fixCode?: string,
   autoFix?: string
 ): Issue {
+  const elementIndex = element.hasAttribute('data-a11y-idx')
+    ? parseInt(element.getAttribute('data-a11y-idx')!, 10)
+    : undefined
   return {
     id: makeId(),
     ruleId,
@@ -95,6 +98,7 @@ function createIssue(
     recommendation,
     fixCode,
     autoFix,
+    elementIndex,
   }
 }
 

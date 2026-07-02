@@ -6,8 +6,8 @@ import type { Issue, ScanResult } from '@/engine/types'
 
 interface IssueListProps {
   result: ScanResult
-  onIssueHover?: (selector: string | null) => void
-  onIssueClick?: (selector: string) => void
+  onIssueHover?: (highlightKey: string | null) => void
+  onIssueClick?: (highlightKey: string) => void
 }
 
 export default function IssueList({ result, onIssueHover, onIssueClick }: IssueListProps) {
@@ -130,8 +130,15 @@ interface IssueRowProps {
   issue: Issue
   expanded: boolean
   onToggle: () => void
-  onHover?: (selector: string | null) => void
-  onLocate?: (selector: string) => void
+  onHover?: (highlightKey: string | null) => void
+  onLocate?: (highlightKey: string) => void
+}
+
+function getHighlightKey(issue: Issue): string {
+  if (issue.elementIndex !== undefined) {
+    return `[data-a11y-idx="${issue.elementIndex}"]`
+  }
+  return issue.elementSelector
 }
 
 function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProps) {
@@ -143,8 +150,8 @@ function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProp
   const cfg = levelConfig[issue.level]
 
   const handleMouseEnter = () => {
-    if (onHover && issue.elementSelector) {
-      onHover(issue.elementSelector)
+    if (onHover) {
+      onHover(getHighlightKey(issue))
     }
   }
 
@@ -156,8 +163,8 @@ function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProp
 
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation()
-    if (onLocate && issue.elementSelector) {
-      onLocate(issue.elementSelector)
+    if (onLocate) {
+      onLocate(getHighlightKey(issue))
     }
   }
 
