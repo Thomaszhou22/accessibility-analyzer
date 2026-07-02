@@ -19,7 +19,6 @@ const HIGHLIGHT_SCRIPT = `
   }
 
   function clearHighlights() {
-  function clearHighlights() {
     document.querySelectorAll('.a11y-hl-overlay, .a11y-hl-label').forEach(function(el) { el.remove(); });
     document.querySelectorAll('*').forEach(function(el) {
       if (el.style.outline === '3px solid rgb(239, 68, 68)' || el.style.outline === '3px solid #ef4444') {
