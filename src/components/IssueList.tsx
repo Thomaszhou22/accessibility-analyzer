@@ -1,0 +1,115 @@
+import { useState } from 'react'
+import { Card, CardContent } from '@/components/ui/Card'
+import { Badge } from '@/components/ui/Badge'
+import { Button } from '@/components/ui/Button'
+import type { Issue, ScanResult } from '@/engine/types'
+
+interface IssueListProps {
+  result: ScanResult
+}
+
+export default function IssueList({ result }: IssueListProps) {
+  const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all')
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+
+  const filtered = filter === 'all' ? result.issues : result.issues.filter((i) => i.level === filter)
+
+  const filters = [
+    { key: 'all' as const, label: 'All', count: result.issues.length },
+    { key: 'error' as const, label: 'Errors', count: result.errors },
+    { key: 'warning' as const, label: 'Warnings', count: result.warnings },
+    { key: 'info' as const, label: 'Info', count: result.infos },
+  ]
+
+  return (
+    <Card>
+      <CardContent className="p-0">
+        {/* Filter tabs */}
+        <div className="flex items-center gap-1 p-4 border-b border-border">
+          {filters.map((f) => (
+            <button
+              key={f.key}
+              onClick={() => setFilter(f.key)}
+              className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                filter === f.key ? 'bg-primary/20 text-primary' : 'text-muted hover:text-white'
+              }`}
+            >
+              {f.label} ({f.count})
+            </button>
+          ))}
+        </div>
+
+        {/* Issue list */}
+        <div className="divide-y divide-border max-h-[500px] overflow-y-auto">
+          {filtered.length === 0 && (
+            <div className="p-8 text-center text-muted text-sm">No issues found in this category.</div>
+          )}
+          {filtered.map((issue, i) => (
+            <IssueRow
+              key={`${issue.id}-${i}`}
+              issue={issue}
+              expanded={expandedId === `${issue.id}-${i}`}
+              onToggle={() => setExpandedId(expandedId === `${issue.id}-${i}` ? null : `${issue.id}-${i}`)}
+            />
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
+
+function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boolean; onToggle: () => void }) {
+  const levelConfig = {
+    error: { variant: 'error' as const, label: 'Error' },
+    warning: { variant: 'warning' as const, label: 'Warning' },
+    info: { variant: 'muted' as const, label: 'Info' },
+  }
+  const cfg = levelConfig[issue.level]
+
+  return (
+    <div className="p-4 hover:bg-surface/50 transition-colors cursor-pointer" onClick={onToggle}>
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-1">
+            <Badge variant={cfg.variant}>{cfg.label}</Badge>
+            <Badge variant="default">WCAG {issue.wcagLevel}</Badge>
+            <span className="text-xs text-muted font-mono">{issue.ruleId}</span>
+          </div>
+          <h4 className="text-sm font-medium text-white">{issue.title}</h4>
+          {!expanded && <p className="text-xs text-muted mt-1 truncate">{issue.description}</p>}
+        </div>
+        <svg
+          className={`w-4 h-4 text-muted shrink-0 transition-transform ${expanded ? 'rotate-180' : ''}`}
+          fill="none" viewBox="0 0 24 24" stroke="currentColor"
+        >
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+        </svg>
+      </div>
+
+      {expanded && (
+        <div className="mt-3 space-y-3">
+          <p className="text-sm text-muted-foreground">{issue.description}</p>
+
+          {issue.elementHtml && (
+            <div className="rounded-md bg-background border border-border p-3">
+              <div className="text-xs text-muted mb-1">Element:</div>
+              <pre className="text-xs font-mono text-accent overflow-x-auto">{issue.elementHtml}</pre>
+            </div>
+          )}
+
+          {issue.recommendation && (
+            <div className="rounded-md bg-success/5 border border-success/20 p-3">
+              <div className="text-xs text-success mb-1 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+                Fix:
+              </div>
+              <p className="text-xs text-muted-foreground font-mono">{issue.recommendation}</p>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
