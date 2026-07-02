@@ -14,6 +14,7 @@ export default function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [history, setHistory] = useState<HistoryEntry[]>([])
+  const [showHistory, setShowHistory] = useState(false)
 
   useEffect(() => {
     setHistory(getHistory())
@@ -118,11 +119,29 @@ export default function App() {
         {!result && (
           <>
             <ScanInput onScan={handleScanUrl} onScanHtml={handleScanHtml} loading={loading} />
-            <ScanHistory
-              history={history}
-              onSelect={handleHistorySelect}
-              onClear={handleClearHistory}
-            />
+            {history.length > 0 && (
+              <div className="flex justify-center mt-3">
+                <button
+                  onClick={() => setShowHistory(!showHistory)}
+                  className="text-xs text-muted hover:text-white transition-colors flex items-center gap-1"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Recent Scans ({history.length})
+                </button>
+              </div>
+            )}
+            {showHistory && (
+              <ScanHistory
+                history={history}
+                onSelect={(url) => {
+                  setShowHistory(false)
+                  handleHistorySelect(url)
+                }}
+                onClear={handleClearHistory}
+              />
+            )}
           </>
         )}
 
