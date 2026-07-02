@@ -1,0 +1,170 @@
+@media print {
+  /* Hide everything not in the report */
+  body * {
+    visibility: hidden;
+  }
+
+  #print-report,
+  #print-report * {
+    visibility: visible;
+  }
+
+  #print-report {
+    display: block !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    background: white !important;
+    color: #1a1a1a !important;
+    padding: 40px;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+
+  /* Reset dark theme colors for print */
+  #print-report .print-section {
+    background: white !important;
+    border: 1px solid #ddd !important;
+    color: #1a1a1a !important;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 4px;
+  }
+
+  #print-report h1 {
+    font-size: 24pt;
+    color: #111 !important;
+    margin-bottom: 4px;
+  }
+
+  #print-report h2 {
+    font-size: 14pt;
+    color: #333 !important;
+    margin-top: 0;
+    margin-bottom: 12px;
+    border-bottom: 2px solid #4f46e5;
+    padding-bottom: 4px;
+  }
+
+  #print-report h3 {
+    font-size: 12pt;
+    color: #222 !important;
+    margin-bottom: 4px;
+  }
+
+  #print-report p,
+  #print-report li,
+  #print-report td,
+  #print-report th {
+    color: #333 !important;
+    font-size: 11pt;
+  }
+
+  #print-report .print-score {
+    font-size: 36pt;
+    font-weight: bold;
+    line-height: 1;
+  }
+
+  #print-report .print-grade {
+    display: inline-block;
+    padding: 4px 16px;
+    border-radius: 4px;
+    font-size: 14pt;
+    font-weight: bold;
+  }
+
+  #print-report table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 12px;
+  }
+
+  #print-report th {
+    background: #f3f4f6 !important;
+    text-align: left;
+    padding: 8px;
+    border: 1px solid #ddd;
+    font-weight: 600;
+  }
+
+  #print-report td {
+    padding: 8px;
+    border: 1px solid #ddd;
+    vertical-align: top;
+  }
+
+  #print-report .print-issue-row {
+    border: 1px solid #e5e7eb !important;
+    margin-bottom: 8px;
+    border-radius: 4px;
+    padding: 12px;
+    break-inside: avoid;
+  }
+
+  #print-report .print-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 3px;
+    font-size: 9pt;
+    font-weight: 600;
+    margin-right: 4px;
+  }
+
+  #print-report .print-badge-error {
+    background: #fef2f2 !important;
+    color: #dc2626 !important;
+    border: 1px solid #fecaca;
+  }
+
+  #print-report .print-badge-warning {
+    background: #fffbeb !important;
+    color: #d97706 !important;
+    border: 1px solid #fde68a;
+  }
+
+  #print-report .print-badge-info {
+    background: #f0f9ff !important;
+    color: #0284c7 !important;
+    border: 1px solid #bae6fd;
+  }
+
+  #print-report .print-badge-wcag {
+    background: #eef2ff !important;
+    color: #4f46e5 !important;
+    border: 1px solid #c7d2fe;
+  }
+
+  #print-report .print-code {
+    font-family: 'SF Mono', Monaco, Consolas, monospace;
+    font-size: 10pt;
+    background: #f9fafb !important;
+    padding: 8px;
+    border-radius: 3px;
+    border: 1px solid #e5e7eb;
+    display: block;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+
+  #print-report .print-footer {
+    margin-top: 24px;
+    padding-top: 12px;
+    border-top: 1px solid #ddd;
+    font-size: 9pt;
+    color: #999 !important;
+    text-align: center;
+  }
+
+  /* Page breaks */
+  #print-report .print-page-break {
+    page-break-before: always;
+  }
+
+  /* Hide UI elements */
+  #print-report .no-print {
+    display: none !important;
+  }
+}

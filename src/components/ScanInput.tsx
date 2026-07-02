@@ -9,6 +9,15 @@ interface UrlInputProps {
   loading: boolean
 }
 
+function normaliseUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!trimmed) return trimmed
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`
+  }
+  return trimmed
+}
+
 export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps) {
   const [url, setUrl] = useState('')
   const [showHtmlMode, setShowHtmlMode] = useState(false)
@@ -19,9 +28,15 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
     if (showHtmlMode) {
       if (html.trim()) onScanHtml(html)
     } else {
-      if (url.trim()) onScan(url.trim())
+      if (url.trim()) {
+        const normalised = normaliseUrl(url)
+        setUrl(normalised)
+        onScan(normalised)
+      }
     }
   }
+
+  const showHint = url.trim() && !/^https?:\/\//i.test(url.trim())
 
   return (
     <Card className="w-full max-w-2xl mx-auto">
@@ -47,18 +62,31 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
 
         <form onSubmit={handleSubmit} className="space-y-3">
           {!showHtmlMode ? (
-            <div className="flex gap-2">
-              <Input
-                type="url"
-                placeholder="https://example.com"
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                disabled={loading}
-              />
-              <Button type="submit" disabled={loading || !url.trim()} className="shrink-0">
-                {loading ? 'Scanning...' : 'Scan'}
-              </Button>
-            </div>
+            <>
+              <div className="flex gap-2">
+                <Input
+                  type="text"
+                  placeholder="example.com or https://example.com"
+                  value={url}
+                  onChange={(e) => setUrl(e.target.value)}
+                  disabled={loading}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+                <Button type="submit" disabled={loading || !url.trim()} className="shrink-0">
+                  {loading ? 'Scanning...' : 'Scan'}
+                </Button>
+              </div>
+              {showHint && (
+                <p className="text-xs text-accent flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Will scan: <span className="font-mono text-accent">{normaliseUrl(url)}</span>
+                </p>
+              )}
+            </>
           ) : (
             <>
               <Textarea
@@ -77,7 +105,7 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
 
         {!showHtmlMode && (
           <p className="text-xs text-muted mt-3">
-            Enter any URL. We try a direct request first, then automatically fall back to CORS proxies if needed.
+            Enter any URL. https:// will be added automatically if missing. We try a direct request first, then automatically fall back to CORS proxies if needed.
           </p>
         )}
       </CardContent>

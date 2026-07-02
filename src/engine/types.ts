@@ -10,6 +10,7 @@ export interface Issue {
   ruleId: string
   level: IssueLevel
   wcagLevel: WCAGLevel
+  wcagCriteria: string[]
   title: string
   description: string
   elementSelector: string

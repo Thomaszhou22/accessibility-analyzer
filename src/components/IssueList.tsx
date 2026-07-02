@@ -90,6 +90,30 @@ function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boole
         <div className="mt-3 space-y-3">
           <p className="text-sm text-muted-foreground">{issue.description}</p>
 
+          {issue.wcagCriteria.length > 0 && (
+            <div className="rounded-md bg-primary/5 border border-primary/20 p-3">
+              <div className="text-xs text-primary mb-1.5 flex items-center gap-1">
+                <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                </svg>
+                WCAG 2.1 Criteria:
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {issue.wcagCriteria.map((criteria) => (
+                  <a
+                    key={criteria}
+                    href={`https://www.w3.org/WAI/WCAG21/Understanding/${criteria.split(' ')[1] ? criteria.split(' ')[0] : criteria}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] text-primary hover:bg-primary/20 transition-colors"
+                  >
+                    {criteria}
+                  </a>
+                ))}
+              </div>
+            </div>
+          )}
+
           {issue.elementHtml && (
             <div className="rounded-md bg-background border border-border p-3">
               <div className="text-xs text-muted mb-1">Element:</div>

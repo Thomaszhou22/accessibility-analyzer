@@ -1,49 +1,77 @@
 import ScanInput from '@/components/ScanInput'
+import ScanHistory from '@/components/ScanHistory'
 import ScorePanel from '@/components/ScorePanel'
 import IssueList from '@/components/IssueList'
+import ReportLayout from '@/components/ReportLayout'
 import { Button } from '@/components/ui/Button'
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import type { ScanResult } from '@/engine/types'
 import { scanUrl, scanHtml } from '@/engine/scanner'
+import { getHistory, addToHistory, clearHistory, type HistoryEntry } from '@/lib/storage'
 
 export default function App() {
   const [result, setResult] = useState<ScanResult | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [history, setHistory] = useState<HistoryEntry[]>([])
 
-  const handleScanUrl = async (url: string) => {
+  useEffect(() => {
+    setHistory(getHistory())
+  }, [])
+
+  const handleScanUrl = useCallback(async (url: string) => {
     setLoading(true)
     setError(null)
     try {
       const res = await scanUrl(url)
       setResult(res)
+      const updated = addToHistory(res)
+      setHistory(updated)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Scan failed. Try HTML Paste Mode.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const handleScanHtml = (html: string) => {
+  const handleScanHtml = useCallback((html: string) => {
     setLoading(true)
     setError(null)
     try {
       const res = scanHtml(html)
       setResult(res)
+      const updated = addToHistory(res)
+      setHistory(updated)
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Scan failed.')
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   const handleReset = () => {
     setResult(null)
     setError(null)
   }
 
+  const handleClearHistory = () => {
+    clearHistory()
+    setHistory([])
+  }
+
+  const handleHistorySelect = (url: string) => {
+    handleScanUrl(url)
+  }
+
+  const handleExportPdf = () => {
+    window.print()
+  }
+
   return (
     <div className="min-h-screen">
+      {/* Hidden report layout for printing */}
+      {result && <ReportLayout result={result} />}
+
       {/* Header */}
       <header className="border-b border-border">
         <div className="max-w-5xl mx-auto px-6 py-4 flex items-center justify-between">
@@ -83,7 +111,14 @@ export default function App() {
         )}
 
         {!result && (
-          <ScanInput onScan={handleScanUrl} onScanHtml={handleScanHtml} loading={loading} />
+          <>
+            <ScanInput onScan={handleScanUrl} onScanHtml={handleScanHtml} loading={loading} />
+            <ScanHistory
+              history={history}
+              onSelect={handleHistorySelect}
+              onClear={handleClearHistory}
+            />
+          </>
         )}
 
         {error && (
@@ -121,9 +156,17 @@ export default function App() {
                   )}
                 </p>
               </div>
-              <Button variant="outline" size="sm" onClick={handleReset}>
-                New Scan
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button variant="outline" size="sm" onClick={handleExportPdf}>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                  </svg>
+                  Export PDF
+                </Button>
+                <Button variant="outline" size="sm" onClick={handleReset}>
+                  New Scan
+                </Button>
+              </div>
             </div>
 
             <ScorePanel result={result} />
