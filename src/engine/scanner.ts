@@ -56,14 +56,34 @@ function assignElementIndices(doc: Document): void {
 
 /**
  * Run all rules against a parsed Document and collect issues.
+ * Filters out issues on elements hidden from assistive technology (aria-hidden).
  */
 function runRules(doc: Document): Issue[] {
   const allIssues: Issue[] = []
 
+  // Pre-compute the set of element indices that are inside aria-hidden subtrees
+  const hiddenIndices = new Set<number>()
+  doc.querySelectorAll('[aria-hidden="true"]').forEach((hiddenEl) => {
+    hiddenEl.querySelectorAll('*').forEach((descendant) => {
+      const idx = descendant.getAttribute('data-a11y-idx')
+      if (idx) hiddenIndices.add(parseInt(idx, 10))
+    })
+    // Also mark the aria-hidden element itself
+    const selfIdx = hiddenEl.getAttribute('data-a11y-idx')
+    if (selfIdx) hiddenIndices.add(parseInt(selfIdx, 10))
+  })
+
   for (const rule of rules) {
     try {
       const ruleIssues = rule.evaluate(doc)
-      allIssues.push(...ruleIssues)
+      // Filter out issues whose target element is inside an aria-hidden subtree
+      const filtered = ruleIssues.filter((issue) => {
+        if (issue.elementIndex !== undefined && hiddenIndices.has(issue.elementIndex)) {
+          return false
+        }
+        return true
+      })
+      allIssues.push(...filtered)
     } catch (err) {
       console.error(`[accessibility-analyzer] Rule "${rule.id}" failed:`, err)
     }
