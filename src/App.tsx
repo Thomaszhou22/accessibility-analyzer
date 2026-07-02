@@ -111,6 +111,11 @@ export default function App() {
                 <h2 className="text-lg font-semibold text-white">Scan Results</h2>
                 <p className="text-xs text-muted">
                   {result.url || 'Pasted HTML'} · {result.durationMs}ms
+                  {result.fetchStrategy && (
+                    <span className="ml-2 px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono">
+                      {result.fetchStrategy}
+                    </span>
+                  )}
                 </p>
               </div>
               <Button variant="outline" size="sm" onClick={handleReset}>

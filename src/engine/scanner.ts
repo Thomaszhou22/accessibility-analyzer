@@ -54,7 +54,6 @@ function runRules(doc: Document): Issue[] {
       const ruleIssues = rule.evaluate(doc)
       allIssues.push(...ruleIssues)
     } catch (err) {
-      // Log rule evaluation errors but don't crash the entire scan
       console.error(`[accessibility-analyzer] Rule "${rule.id}" failed:`, err)
     }
   }
@@ -62,12 +61,169 @@ function runRules(doc: Document): Issue[] {
   return allIssues
 }
 
+// ---------------------------------------------------------------------------
+// Multi-strategy URL fetcher
+// ---------------------------------------------------------------------------
+
+interface FetchStrategy {
+  name: string
+  prepare: (url: string) => { reqUrl: string; init?: RequestInit }
+}
+
+/** Strategy 1: Direct fetch */
+const directStrategy: FetchStrategy = {
+  name: 'Direct',
+  prepare: (url) => ({
+    reqUrl: url,
+    init: {
+      headers: {
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+      },
+      redirect: 'follow',
+    },
+  }),
+}
+
+/** Strategy 2: allorigins.win */
+const allOriginsStrategy: FetchStrategy = {
+  name: 'Proxy: allorigins',
+  prepare: (url) => ({
+    reqUrl: `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+    init: { redirect: 'follow' },
+  }),
+}
+
+/** Strategy 3: corsproxy.io */
+const corsProxyStrategy: FetchStrategy = {
+  name: 'Proxy: corsproxy.io',
+  prepare: (url) => ({
+    reqUrl: `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+    init: { redirect: 'follow' },
+  }),
+}
+
+/** Strategy 4: r.jina.ai reader proxy */
+const jinaReaderStrategy: FetchStrategy = {
+  name: 'Proxy: jina reader',
+  prepare: (url) => ({
+    reqUrl: `https://r.jina.ai/${url}`,
+    init: {
+      headers: {
+        'X-Return-Format': 'html',
+        'X-No-Cache': 'true',
+      },
+    },
+  }),
+}
+
+/** Strategy 5: codetabs CORS proxy */
+const codetabsStrategy: FetchStrategy = {
+  name: 'Proxy: codetabs',
+  prepare: (url) => ({
+    reqUrl: `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
+    init: { redirect: 'follow' },
+  }),
+}
+
+/** Strategy 6: thingproxy */
+const thingProxyStrategy: FetchStrategy = {
+  name: 'Proxy: thingproxy',
+  prepare: (url) => ({
+    reqUrl: `https://thingproxy.freeboard.io/fetch/${url}`,
+    init: { redirect: 'follow' },
+  }),
+}
+
+/** Ordered list, tried in sequence until one succeeds. */
+const fetchStrategies: FetchStrategy[] = [
+  directStrategy,
+  allOriginsStrategy,
+  corsProxyStrategy,
+  jinaReaderStrategy,
+  codetabsStrategy,
+  thingProxyStrategy,
+]
+
+/** Normalise user-entered URL: add https:// if no protocol. */
+function normaliseUrl(url: string): string {
+  const trimmed = url.trim()
+  if (!/^https?:\/\//i.test(trimmed)) {
+    return `https://${trimmed}`
+  }
+  return trimmed
+}
+
+/** Quick check: does this text look like HTML? */
+function looksLikeHtml(text: string): boolean {
+  const lower = text.toLowerCase()
+  return (
+    lower.includes('<html') ||
+    lower.includes('<head') ||
+    lower.includes('<body') ||
+    lower.includes('<!doctype') ||
+    lower.includes('<div') ||
+    lower.includes('<p') ||
+    lower.includes('<title')
+  )
+}
+
+/**
+ * Attempt to fetch HTML via multiple strategies.
+ * Returns the HTML string and the strategy name that worked.
+ */
+async function fetchHtmlMultiStrategy(
+  rawUrl: string
+): Promise<{ html: string; strategy: string }> {
+  const url = normaliseUrl(rawUrl)
+  const errors: string[] = []
+
+  for (const strategy of fetchStrategies) {
+    const { reqUrl, init } = strategy.prepare(url)
+    try {
+      const controller = new AbortController()
+      const timeout = setTimeout(() => controller.abort(), 15_000)
+      const response = await fetch(reqUrl, { ...init, signal: controller.signal })
+      clearTimeout(timeout)
+
+      if (!response.ok) {
+        errors.push(`${strategy.name}: HTTP ${response.status}`)
+        continue
+      }
+
+      const text = await response.text()
+      if (!text || text.length < 50) {
+        errors.push(`${strategy.name}: empty response`)
+        continue
+      }
+
+      if (!looksLikeHtml(text)) {
+        errors.push(`${strategy.name}: response is not HTML`)
+        continue
+      }
+
+      console.info(
+        `[accessibility-analyzer] Fetched via ${strategy.name} (${text.length} chars)`
+      )
+      return { html: text, strategy: strategy.name }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err)
+      errors.push(`${strategy.name}: ${msg}`)
+    }
+  }
+
+  throw new Error(
+    `All fetch strategies failed for "${url}".\n` +
+      `Details:\n${errors.join('\n')}\n\n` +
+      `Tip: Open the page in your browser, right-click, View Page Source, copy the HTML, and use HTML Paste Mode.`
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Public API
+// ---------------------------------------------------------------------------
+
 /**
  * Scan a raw HTML string for accessibility issues.
- *
- * @param html - The HTML source code to scan
- * @param url - Optional URL to associate with the result (for reporting)
- * @returns ScanResult with all found issues and a computed score
  */
 export function scanHtml(html: string, url?: string): ScanResult {
   const startTime = performance.now()
@@ -97,49 +253,15 @@ export function scanHtml(html: string, url?: string): ScanResult {
 /**
  * Fetch a URL and scan its HTML content for accessibility issues.
  *
- * Note: Due to browser CORS restrictions, this may fail for cross-origin URLs.
- * If you encounter CORS errors, consider using scanHtml() with manually pasted HTML,
- * or route the request through a server-side proxy.
- *
- * @param url - The URL of the page to scan
- * @returns ScanResult with all found issues and a computed score
- * @throws Error if the fetch fails or the response is not valid HTML
+ * Uses a multi-strategy approach: tries a direct request first, then
+ * automatically falls back through several public CORS proxies until
+ * one succeeds. The result includes which strategy was used.
  */
-export async function scanUrl(url: string): Promise<ScanResult> {
+export async function scanUrl(rawUrl: string): Promise<ScanResult> {
   const startTime = performance.now()
+  const url = normaliseUrl(rawUrl)
 
-  let response: Response
-
-  try {
-    response = await fetch(url, {
-      headers: {
-        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-      },
-      redirect: 'follow',
-    })
-  } catch (fetchErr) {
-    const endTime = performance.now()
-    throw new Error(
-      `Failed to fetch URL "${url}". This may be due to CORS restrictions or network issues. ` +
-        `Error: ${fetchErr instanceof Error ? fetchErr.message : String(fetchErr)}. ` +
-        `Tip: You can manually copy the page HTML and use scanHtml() instead.`
-    )
-  }
-
-  if (!response.ok) {
-    throw new Error(
-      `Fetch returned HTTP ${response.status} ${response.statusText} for URL "${url}".`
-    )
-  }
-
-  const contentType = response.headers.get('content-type') || ''
-  if (!contentType.includes('text/html') && !contentType.includes('application/xhtml')) {
-    console.warn(
-      `[accessibility-analyzer] Response content-type is "${contentType}", expected text/html. Attempting to parse anyway.`
-    )
-  }
-
-  const html = await response.text()
+  const { html, strategy } = await fetchHtmlMultiStrategy(url)
 
   const parseStart = performance.now()
   const parser = new DOMParser()
@@ -147,7 +269,7 @@ export async function scanUrl(url: string): Promise<ScanResult> {
   const parseEnd = performance.now()
 
   if (!doc || !doc.documentElement) {
-    throw new Error(`Failed to parse HTML from URL "${url}". The response may not be valid HTML.`)
+    throw new Error(`Failed to parse HTML from "${url}". The response may not be valid HTML.`)
   }
 
   console.debug(
@@ -170,11 +292,12 @@ export async function scanUrl(url: string): Promise<ScanResult> {
     issues,
     scannedAt: new Date().toISOString(),
     durationMs: Math.round(endTime - startTime),
+    fetchStrategy: strategy,
   }
 }
 
 /**
- * Get summary statistics for a scan result, useful for display.
+ * Get summary statistics for a scan result.
  */
 export function getSummary(result: ScanResult): {
   scoreLabel: string
@@ -229,9 +352,6 @@ export function groupIssuesByRule(issues: Issue[]): Map<string, Issue[]> {
 /**
  * Filter issues by severity level.
  */
-export function filterByLevel(
-  issues: Issue[],
-  level: IssueLevel
-): Issue[] {
+export function filterByLevel(issues: Issue[], level: IssueLevel): Issue[] {
   return issues.filter((i) => i.level === level)
 }

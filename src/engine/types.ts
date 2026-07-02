@@ -29,6 +29,7 @@ export interface ScanResult {
   issues: Issue[]
   scannedAt: string
   durationMs: number
+  fetchStrategy?: string
 }
 
 // A WCAG detection rule

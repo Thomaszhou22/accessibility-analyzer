@@ -77,7 +77,7 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
 
         {!showHtmlMode && (
           <p className="text-xs text-muted mt-3">
-            Note: Some websites block cross-origin scanning. If a URL fails, use HTML Paste Mode.
+            Enter any URL. We try a direct request first, then automatically fall back to CORS proxies if needed.
           </p>
         )}
       </CardContent>
