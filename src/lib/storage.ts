@@ -61,6 +61,17 @@ export function clearHistory(): void {
   }
 }
 
+export function removeFromHistory(url: string): HistoryEntry[] {
+  const history = getHistory()
+  const updated = history.filter((h) => h.url !== url)
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
+  } catch {
+    // ignore
+  }
+  return updated
+}
+
 export function getLastResult(): ScanResult | null {
   try {
     const raw = localStorage.getItem(LAST_RESULT_KEY)

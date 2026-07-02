@@ -16,6 +16,7 @@ export interface Issue {
   elementSelector: string
   elementHtml: string
   recommendation: string
+  fixCode?: string
   autoFix?: string
 }
 

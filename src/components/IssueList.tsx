@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -58,6 +58,70 @@ export default function IssueList({ result }: IssueListProps) {
   )
 }
 
+function CopyButton({ code }: { code: string }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(code)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // fallback
+      const textarea = document.createElement('textarea')
+      textarea.value = code
+      document.body.appendChild(textarea)
+      textarea.select()
+      document.execCommand('copy')
+      document.body.removeChild(textarea)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
+  return (
+    <button
+      onClick={handleCopy}
+      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-white hover:bg-white/10 transition-all"
+      title="Copy code"
+    >
+      {copied ? (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M3 8l3.5 3.5L13 5" />
+        </svg>
+      ) : (
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <rect x="5" y="5" width="9" height="9" rx="1.5" />
+          <path d="M3 11V3.5A1.5 1.5 0 0 1 4.5 2H11" />
+        </svg>
+      )}
+    </button>
+  )
+}
+
+function CodeBlock({ code }: { code: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const lines = code.split('\n')
+  const previewLines = lines.slice(0, 2)
+  const needsExpand = lines.length > 2
+
+  return (
+    <div className="rounded-md bg-[#0d1117] border border-[#30363d] overflow-hidden">
+      <pre className={`text-xs font-mono text-[#e6edf3] p-3 overflow-x-auto ${!expanded && needsExpand ? 'max-h-[52px] overflow-hidden' : ''}`}>
+        <code>{expanded ? code : previewLines.join('\n')}{!expanded && needsExpand ? '\n' : ''}</code>
+      </pre>
+      {needsExpand && (
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="w-full px-3 py-1.5 text-[11px] text-[#8b949e] hover:text-[#e6edf3] bg-[#161b22] hover:bg-[#1c2128] border-t border-[#30363d] transition-colors"
+        >
+          {expanded ? 'Show less' : `Show more (${lines.length} lines)`}
+        </button>
+      )}
+    </div>
+  )
+}
+
 function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boolean; onToggle: () => void }) {
   const levelConfig = {
     error: { variant: 'error' as const, label: 'Error' },
@@ -87,7 +151,7 @@ function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boole
       </div>
 
       {expanded && (
-        <div className="mt-3 space-y-3">
+        <div className="mt-3 space-y-3" onClick={(e) => e.stopPropagation()}>
           <p className="text-sm text-muted-foreground">{issue.description}</p>
 
           {issue.wcagCriteria.length > 0 && (
@@ -130,6 +194,21 @@ function IssueRow({ issue, expanded, onToggle }: { issue: Issue; expanded: boole
                 Fix:
               </div>
               <p className="text-xs text-muted-foreground font-mono">{issue.recommendation}</p>
+            </div>
+          )}
+
+          {issue.fixCode && (
+            <div>
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="text-xs text-primary flex items-center gap-1">
+                  <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                  Reference Fix Code
+                </div>
+                <CopyButton code={issue.fixCode} />
+              </div>
+              <CodeBlock code={issue.fixCode} />
             </div>
           )}
         </div>

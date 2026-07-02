@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/Button'
 import { useState, useEffect, useCallback } from 'react'
 import type { ScanResult } from '@/engine/types'
 import { scanUrl, scanHtml } from '@/engine/scanner'
-import { getHistory, addToHistory, clearHistory, getLastResult, saveLastResult, clearLastResult, type HistoryEntry } from '@/lib/storage'
+import { getHistory, addToHistory, clearHistory, removeFromHistory, getLastResult, saveLastResult, clearLastResult, type HistoryEntry } from '@/lib/storage'
 
 export default function App() {
   const [result, setResult] = useState<ScanResult | null>(null)
@@ -63,6 +63,15 @@ export default function App() {
   const handleClearHistory = () => {
     clearHistory()
     setHistory([])
+  }
+
+  const handleRemoveHistory = (url: string) => {
+    const updated = removeFromHistory(url)
+    setHistory(updated)
+    if (result && result.url === url) {
+      setResult(null)
+      clearLastResult()
+    }
   }
 
   const handleHistorySelect = (url: string) => {
@@ -139,6 +148,7 @@ export default function App() {
                   setShowHistory(false)
                   handleHistorySelect(url)
                 }}
+                onRemove={handleRemoveHistory}
                 onClear={handleClearHistory}
               />
             )}

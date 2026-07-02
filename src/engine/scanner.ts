@@ -61,6 +61,35 @@ function runRules(doc: Document): Issue[] {
   return allIssues
 }
 
+// Map of ruleId + title pattern -> fix code
+const fixCodeMap: Record<string, string> = {
+  'img-alt': '<img src="photo.jpg" alt="Description of the image" />\n<img src="decorative.png" alt="" role="presentation" />',
+  'color-contrast': '/* Before */\n<p style="color: #aaa; background: #fff;">Text</p>\n\n/* After (4.5:1+) */\n<p style="color: #333; background: #fff;">Text</p>\n\n// React\n<p className="text-gray-800 bg-white">Text</p>',
+  'form-label': '<!-- HTML -->\n<label for="email">Email</label>\n<input type="email" id="email" />\n\n// React\n<label htmlFor="email">\n  Email\n  <input type="email" id="email" />\n</label>\n\n// Or aria-label\n<input type="text" aria-label="Email address" />',
+  'button-text': '<!-- HTML -->\n<button aria-label="Close">\u00d7</button>\n<button aria-label="Search"><svg>...</svg></button>\n\n// React\n<button aria-label="Close" onClick={onClose}>\u00d7</button>',
+  'link-text': '<!-- Before -->\n<a href="/guide">click here</a>\n\n<!-- After -->\n<a href="/guide">Read our accessibility guide</a>',
+  'heading-order': '<!-- Before -->\n<h1>Main Title</h1>\n<h3>Subsection</h3>\n\n<!-- After -->\n<h1>Main Title</h1>\n<h2>Section</h2>\n<h3>Subsection</h3>',
+  'html-lang': '<html lang="en">\n<html lang="zh-CN">',
+  'empty-link': '<a href="/page">Go to page</a>\n\n// Or icon link\n<a href="/page" aria-label="Go to page">\n  <svg>...</svg>\n</a>',
+  'tabindex': '<!-- Before -->\n<div tabindex="3">Third</div>\n\n<!-- After -->\n<div tabindex="0">Third</div>\n\n// React\n<div tabIndex={0}>Third</div>',
+  'iframe-title': '<iframe src="..." title="YouTube video player" />\n\n// React\n<iframe src="..." title="YouTube video player" />',
+  'duplicate-id': '<!-- Before -->\n<div id="section">A</div>\n<div id="section">B</div>\n\n<!-- After -->\n<div id="section-1">A</div>\n<div id="section-2">B</div>',
+  'meta-viewport': '<!-- Before -->\n<meta name="viewport" content="user-scalable=no" />\n\n<!-- After -->\n<meta name="viewport" content="width=device-width, initial-scale=1.0" />',
+  'aria-valid': '<div role="button">Action</div>\n<div role="dialog">Modal</div>\n<div role="navigation">Nav</div>\n<div role="search">Search area</div>',
+  'list-structure': '<!-- Before -->\n<ul>\n  <div>Not a list item</div>\n</ul>\n\n<!-- After -->\n<ul>\n  <li>Valid list item</li>\n</ul>',
+  'media-caption': '<video src="demo.mp4">\n  <track kind="captions" src="captions.vtt" srclang="en" label="English" default />\n</video>',
+}
+
+function attachFixCodes(issues: Issue[]): Issue[] {
+  return issues.map(issue => {
+    const fix = fixCodeMap[issue.ruleId]
+    if (fix && !issue.fixCode) {
+      return { ...issue, fixCode: fix }
+    }
+    return issue
+  })
+}
+
 // ---------------------------------------------------------------------------
 // Multi-strategy URL fetcher
 // ---------------------------------------------------------------------------
@@ -241,7 +270,7 @@ export function scanHtml(html: string, url?: string): ScanResult {
   const parser = new DOMParser()
   const doc = parser.parseFromString(html, 'text/html')
 
-  const issues = runRules(doc)
+  const issues = attachFixCodes(runRules(doc))
   const { errors, warnings, infos } = countByLevel(issues)
   const score = calculateScore(errors, warnings, infos)
 
@@ -286,7 +315,7 @@ export async function scanUrl(rawUrl: string): Promise<ScanResult> {
     `[accessibility-analyzer] HTML parsed in ${(parseEnd - parseStart).toFixed(2)}ms (${html.length} chars)`
   )
 
-  const issues = runRules(doc)
+  const issues = attachFixCodes(runRules(doc))
   const { errors, warnings, infos } = countByLevel(issues)
   const score = calculateScore(errors, warnings, infos)
 

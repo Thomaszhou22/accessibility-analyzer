@@ -79,6 +79,7 @@ function createIssue(
   description: string,
   element: Element,
   recommendation: string,
+  fixCode?: string,
   autoFix?: string
 ): Issue {
   return {
@@ -92,6 +93,7 @@ function createIssue(
     elementSelector: buildSelector(element),
     elementHtml: getElementHtml(element),
     recommendation,
+    fixCode,
     autoFix,
   }
 }
@@ -118,6 +120,8 @@ const imgAltRule: Rule = {
             `Image src="${img.getAttribute('src') || ''}" has no alt attribute. Screen readers cannot describe this image to users.`,
             img,
             'Add an alt attribute that describes the image content. For decorative images, use alt="".',
+            `<img src="photo.jpg" alt="Description of the image content" />
+<img src="decorative.png" alt="" role="presentation" />`,
             `alt=""`
           )
         )
@@ -132,6 +136,7 @@ const imgAltRule: Rule = {
               'Image has an empty alt attribute but is not marked as decorative (role="presentation").',
               img,
               'If this image is decorative, add role="presentation". If it conveys meaning, provide descriptive alt text.',
+              `<img src="decorative.png" alt="" role="presentation" />`,
               'role="presentation"'
             )
           )
@@ -223,6 +228,11 @@ const colorContrastRule: Rule = {
                 `Text color and background color have a contrast ratio of ${ratio.toFixed(2)}:1, which is below the WCAG AA minimum of 4.5:1.`,
                 el,
                 'Increase the contrast between text and background colors to at least 4.5:1 for normal text or 3:1 for large text.',
+                `/* Before: low contrast */
+.text { color: #999; background: #fff; }
+
+/* After: WCAG AA compliant (4.5:1+) */
+.text { color: #595959; background: #fff; }`,
               )
             )
           }
@@ -289,6 +299,19 @@ const formLabelRule: Rule = {
             `${inputEl.tagName.toLowerCase()}${inputEl.getAttribute('type') ? `[type="${inputEl.getAttribute('type')}"]` : ''}${inputEl.getAttribute('name') ? `[name="${inputEl.getAttribute('name')}"]` : ''} has no associated label, aria-label, or title attribute.`,
             inputEl,
               'Add a <label> element with a matching for attribute, or wrap the control in a <label>, or add an aria-label attribute describing the field purpose.',
+              `<!-- HTML: label with for attribute -->
+<label for="email">Email address</label>
+<input type="email" id="email" name="email" />
+
+<!-- HTML: wrapping label -->
+<label>
+  Email address
+  <input type="email" name="email" />
+</label>
+
+{/* React: htmlFor */}
+<label htmlFor="email">Email address</label>
+<input type="email" id="email" name="email" />`,
           )
         )
       }
@@ -334,6 +357,13 @@ const buttonTextRule: Rule = {
             'Button element has no text content, aria-label, title, or image with alt text. Screen readers cannot announce its purpose.',
             button,
             'Add descriptive text inside the button, or add an aria-label attribute that describes the button action.',
+            `<button aria-label="Close dialog">
+  <svg>...</svg>
+</button>
+
+<button aria-label="Search">
+  <img src="search-icon.svg" alt="" />
+</button>`,
             `aria-label="${button.getAttribute('class')?.includes('close') ? 'Close' : button.getAttribute('class')?.includes('search') ? 'Search' : 'Action'}"`
           )
         )
@@ -386,6 +416,11 @@ const linkTextRule: Rule = {
             'Link text is not descriptive enough. Users navigating by link list cannot understand the destination from the text alone.',
             link,
             'Replace vague link text with descriptive text that explains the link destination or purpose. For example, instead of "click here", use "Read our accessibility guide".',
+            `<!-- Before: vague -->
+<a href="/guide">Click here</a>
+
+<!-- After: descriptive -->
+<a href="/guide">Read our accessibility guide</a>`,
           )
         )
       }
@@ -426,6 +461,13 @@ const headingOrderRule: Rule = {
             `Heading levels should not skip. An h${previousLevel} is followed by h${currentLevel}, skipping h${previousLevel + 1}.`,
             heading,
             `Use h${previousLevel + 1} instead of h${currentLevel}, or restructure the heading hierarchy to avoid skipping levels.`,
+            `<!-- Before: skipped level -->
+<h${previousLevel}>Section</h${previousLevel}>
+<h${currentLevel}>Subsection</h${currentLevel}>
+
+<!-- After: proper hierarchy -->
+<h${previousLevel}>Section</h${previousLevel}>
+<h${previousLevel + 1}>Subsection</h${previousLevel + 1}>`,
             `<h${previousLevel + 1}>${heading.textContent}</h${previousLevel + 1}>`
           )
         )
@@ -459,6 +501,14 @@ const htmlLangRule: Rule = {
           'The html element does not have a lang attribute. Screen readers need this to determine the correct pronunciation and language settings.',
           htmlEl,
           'Add a lang attribute to the html element indicating the page language. For example: lang="en" for English or lang="zh-CN" for Simplified Chinese.',
+          `<!-- English -->
+<html lang="en">
+
+<!-- Simplified Chinese -->
+<html lang="zh-CN">
+
+<!-- Japanese -->
+<html lang="ja">`,
           'lang="en"'
         )
       )
@@ -472,6 +522,11 @@ const htmlLangRule: Rule = {
           'The html element has a lang attribute but its value is empty. A valid language code is required.',
           htmlEl,
           'Provide a valid language code. For example: lang="en" or lang="zh-CN".',
+          `<!-- Before: empty lang -->
+<html lang="">
+
+<!-- After: valid language code -->
+<html lang="en">`,
           'lang="en"'
         )
       )
@@ -517,6 +572,13 @@ const emptyLinkRule: Rule = {
             'Link has no text content, image with alt text, aria-label, or title. Screen readers cannot announce its purpose.',
             link,
             'Add text content inside the link, or provide an aria-label, or add a title attribute describing the link destination.',
+            `<!-- Link with visible text -->
+<a href="/about">About our company</a>
+
+<!-- Icon-only link with aria-label -->
+<a href="/cart" aria-label="Shopping cart">
+  <svg>...</svg>
+</a>`,
           )
         )
       }
@@ -550,6 +612,11 @@ const tabindexRule: Rule = {
             `Element has tabindex="${tabindex}". Positive tabindex values disrupt the natural tab order of the page, making keyboard navigation confusing and unpredictable.`,
             el,
             'Use tabindex="0" to make the element focusable in DOM order, or tabindex="-1" to make it focusable only programmatically. Restructure the DOM order instead of using positive tabindex.',
+            `<!-- Before: positive tabindex (bad) -->
+<div tabindex="5">Focusable content</div>
+
+<!-- After: natural DOM order -->
+<div tabindex="0">Focusable content</div>`,
           )
         )
       }
@@ -584,6 +651,11 @@ const iframeTitleRule: Rule = {
             `Iframe${iframe.getAttribute('src') ? ` (src="${iframe.getAttribute('src')}")` : ''} has no title attribute. Screen readers cannot describe the iframe content to users.`,
             iframe,
             'Add a descriptive title attribute to the iframe. For example: title="YouTube video player" or title="Google Map".',
+            `<iframe
+  src="https://www.youtube.com/embed/xyz"
+  title="Product demo video"
+  allowfullscreen
+></iframe>`,
             `title="Embedded content"`
           )
         )
@@ -628,6 +700,13 @@ const duplicateIdRule: Rule = {
               `The ID "${id}" appears ${elements.length} times on the page. IDs must be unique. This can cause issues with label associations, ARIA references, and assistive technologies.`,
               el,
               `Make each ID unique. Consider using a suffix or numbering scheme, e.g. "${id}-1", "${id}-2".`,
+              `<!-- Before: duplicate IDs -->
+<div id="${id}">First</div>
+<div id="${id}">Second</div>
+
+<!-- After: unique IDs -->
+<div id="${id}-1">First</div>
+<div id="${id}-2">Second</div>`,
             )
           )
         })
@@ -664,6 +743,11 @@ const metaViewportRule: Rule = {
             'The meta viewport tag sets user-scalable=no, which prevents users from zooming the page. Users with low vision need to zoom to read content.',
             viewport,
             'Remove user-scalable=no from the viewport meta tag, or set it to user-scalable=yes.',
+            `<!-- Before: zoom disabled -->
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+
+<!-- After: zoom enabled -->
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=yes">`,
             content.replace(/user-scalable\s*=\s*no/i, 'user-scalable=yes')
           )
         )
@@ -679,6 +763,11 @@ const metaViewportRule: Rule = {
             `The meta viewport tag sets maximum-scale=${maximumScale[1]}, which limits zoom below the recommended minimum of 5. Users should be able to zoom to at least 500%.`,
             viewport,
             'Increase maximum-scale to at least 5, or remove the maximum-scale restriction entirely.',
+            `<!-- Before: limited zoom -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=${maximumScale[1]}">
+
+<!-- After: sufficient zoom -->
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5">`,
           )
         )
       }
@@ -737,6 +826,12 @@ const ariaValidRule: Rule = {
               `The role "${r}" is not a valid WAI-ARIA role. Assistive technologies may not recognize this element correctly.`,
               el,
               `Use a valid ARIA role. Refer to the WAI-ARIA specification for the complete list of valid roles.`,
+              `<!-- Common valid ARIA roles -->
+<div role="button">Click me</div>
+<div role="navigation">...</div>
+<div role="alert">Important message</div>
+<div role="dialog" aria-label="Settings">...</div>
+<div role="tablist">...</div>`,
             )
           )
         }
@@ -760,6 +855,10 @@ const ariaValidRule: Rule = {
               `The aria-labelledby attribute references an element with ID "${refId}", but no such element exists on the page.`,
               el,
               `Ensure the aria-labelledby attribute contains the correct ID, or add an element with that ID to the page.`,
+              `<h2 id="dialog-title">Settings</h2>
+<div role="dialog" aria-labelledby="dialog-title">
+  ...
+</div>`,
             )
           )
         }
@@ -783,6 +882,8 @@ const ariaValidRule: Rule = {
               `The aria-describedby attribute references an element with ID "${refId}", but no such element exists on the page.`,
               el,
               `Ensure the aria-describedby attribute contains the correct ID, or add an element with that ID to the page.`,
+              `<input type="email" aria-describedby="email-help" />
+<p id="email-help">Enter your work email address.</p>`,
             )
           )
         }
@@ -803,6 +904,10 @@ const ariaValidRule: Rule = {
             `The aria-controls attribute references an element with ID "${ref}", but no such element exists on the page.`,
             el,
             'Ensure the aria-controls attribute contains the correct ID of the controlled element.',
+            `<button aria-controls="panel-1" aria-expanded="true">Toggle</button>
+<div id="panel-1" role="region">
+  Controlled content
+</div>`,
           )
         )
       }
@@ -837,6 +942,16 @@ const listStructureRule: Rule = {
               `List element <${list.tagName.toLowerCase()}> contains a direct child <${child.tagName.toLowerCase()}>. Only <li> elements should be direct children of list elements.`,
               child,
               `Wrap the content in a <li> element, or move it outside the list if it is not list content.`,
+              `<!-- Before: invalid structure -->
+<ul>
+  <div>Not a list item</div>
+</ul>
+
+<!-- After: proper structure -->
+<ul>
+  <li>List item content</li>
+  <li>Another item</li>
+</ul>`,
             )
           )
         }
@@ -875,6 +990,16 @@ const mediaCaptionRule: Rule = {
             `Video${video.getAttribute('src') ? ` (src="${truncateAttrValue(video.getAttribute('src')!)}")` : ''} has no <track kind="captions"> element. Users who are deaf or hard of hearing cannot access the audio content.`,
             video,
             'Add a <track kind="captions" src="captions.vtt" srclang="en" label="English"> element inside the video element.',
+            `<video controls>
+  <source src="video.mp4" type="video/mp4" />
+  <track
+    kind="captions"
+    src="captions.vtt"
+    srclang="en"
+    label="English"
+    default
+  />
+</video>`,
             '<track kind="captions" src="captions.vtt" srclang="en" label="English" default>'
           )
         )
@@ -897,6 +1022,16 @@ const mediaCaptionRule: Rule = {
             `Audio element has no <track> element and no visible transcript link. Consider providing a text alternative.`,
             audio,
             'Add a <track kind="captions"> element, or provide a link to a transcript below the audio player.',
+            `<audio controls>
+  <source src="podcast.mp3" type="audio/mpeg" />
+  <track
+    kind="captions"
+    src="transcript.vtt"
+    srclang="en"
+    label="English"
+  />
+</audio>
+<a href="/transcript.html">Read transcript</a>`,
           )
         )
       }
