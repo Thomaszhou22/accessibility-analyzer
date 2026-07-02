@@ -27,12 +27,6 @@ const HIGHLIGHT_SCRIPT = `
 </style>
 <script>
 (function() {
-  // Assign indices to all elements (mirrors scanner's assignElementIndices)
-  var allEls = document.querySelectorAll('*');
-  for (var i = 0; i < allEls.length; i++) {
-    allEls[i].setAttribute('data-a11y-idx', String(i));
-  }
-
   function clearHighlights() {
     document.querySelectorAll('.a11y-hl-overlay, .a11y-hl-label, .a11y-hl-backdrop').forEach(function(el) { el.remove(); });
     document.querySelectorAll('*').forEach(function(el) {
@@ -53,44 +47,48 @@ const HIGHLIGHT_SCRIPT = `
     }
     if (!el) return;
 
-    var rect = el.getBoundingClientRect();
-    var scrollY = window.scrollY || window.pageYOffset;
-    var scrollX = window.scrollX || window.pageXOffset;
-
-    // Dim the rest of the page
-    var backdrop = document.createElement('div');
-    backdrop.className = 'a11y-hl-backdrop';
-    backdrop.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: ' + document.documentElement.scrollHeight + 'px; background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
-    document.body.appendChild(backdrop);
-
-    // Main highlight box
-    var overlay = document.createElement('div');
-    overlay.className = 'a11y-hl-overlay';
-    var padding = 4;
-    overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; animation: a11y-pulse 1.5s ease-in-out infinite;';
-    document.body.appendChild(overlay);
-
-    // "Hole" in backdrop for the highlighted element (bring it above backdrop)
-    var cutout = document.createElement('div');
-    cutout.className = 'a11y-hl-overlay';
-    cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0); border-radius: 4px;';
-    document.body.appendChild(cutout);
-
-    // Label with issue title
-    var label = document.createElement('div');
-    label.className = 'a11y-hl-label';
-    var labelTop = rect.top + scrollY - padding - 32;
-    if (labelTop < scrollY) labelTop = rect.top + scrollY + rect.height + padding + 4;
-    label.style.cssText = 'position: absolute; top: ' + labelTop + 'px; left: ' + (rect.left + scrollX - padding) + 'px; background: #ef4444; color: white; font-size: 13px; font-weight: 600; font-family: system-ui, -apple-system, sans-serif; padding: 4px 12px; border-radius: 6px; z-index: 2147483647; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); animation: a11y-slide-in 0.3s ease; max-width: 400px; overflow: hidden; text-overflow: ellipsis;';
-    label.textContent = labelText || 'Accessibility Issue';
-    document.body.appendChild(label);
-
-    el.style.outline = '3px solid #ef4444';
-    el.style.outlineOffset = '2px';
-    el.style.position = el.style.position || 'static';
-    el.style.zIndex = '2147483645';
-
+    // Scroll into view first, then calculate position
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    
+    // Wait for scroll to complete before positioning
+    setTimeout(function() {
+      var rect = el.getBoundingClientRect();
+      var scrollY = window.scrollY || window.pageYOffset;
+      var scrollX = window.scrollX || window.pageXOffset;
+
+      // Dim the rest of the page
+      var backdrop = document.createElement('div');
+      backdrop.className = 'a11y-hl-backdrop';
+      backdrop.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: ' + document.documentElement.scrollHeight + 'px; background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
+      document.body.appendChild(backdrop);
+
+      // Main highlight box
+      var overlay = document.createElement('div');
+      overlay.className = 'a11y-hl-overlay';
+      var padding = 4;
+      overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; animation: a11y-pulse 1.5s ease-in-out infinite;';
+      document.body.appendChild(overlay);
+
+      // "Hole" in backdrop for the highlighted element (bring it above backdrop)
+      var cutout = document.createElement('div');
+      cutout.className = 'a11y-hl-overlay';
+      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0); border-radius: 4px;';
+      document.body.appendChild(cutout);
+
+      // Label with issue title
+      var label = document.createElement('div');
+      label.className = 'a11y-hl-label';
+      var labelTop = rect.top + scrollY - padding - 32;
+      if (labelTop < scrollY) labelTop = rect.top + scrollY + rect.height + padding + 4;
+      label.style.cssText = 'position: absolute; top: ' + labelTop + 'px; left: ' + (rect.left + scrollX - padding) + 'px; background: #ef4444; color: white; font-size: 13px; font-weight: 600; font-family: system-ui, -apple-system, sans-serif; padding: 4px 12px; border-radius: 6px; z-index: 2147483647; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); animation: a11y-slide-in 0.3s ease; max-width: 400px; overflow: hidden; text-overflow: ellipsis;';
+      label.textContent = labelText || 'Accessibility Issue';
+      document.body.appendChild(label);
+
+      el.style.outline = '3px solid #ef4444';
+      el.style.outlineOffset = '2px';
+      el.style.position = el.style.position || 'static';
+      el.style.zIndex = '2147483645';
+    }, 500);
   }
 
   window.addEventListener('message', function(e) {

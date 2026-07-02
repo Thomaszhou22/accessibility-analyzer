@@ -94,11 +94,6 @@ export default function App() {
     window.print()
   }
 
-  const handleIssueHover = useCallback((selector: string | null, label?: string | null) => {
-    setHighlightSelector(selector)
-    setHighlightLabel(label ?? null)
-  }, [])
-
   const handleIssueClick = useCallback((selector: string, label?: string | null) => {
     setHighlightSelector(selector)
     setHighlightLabel(label ?? null)
@@ -256,7 +251,6 @@ export default function App() {
                 <div className="lg:order-2">
                   <IssueList
                     result={result}
-                    onIssueHover={handleIssueHover}
                     onIssueClick={handleIssueClick}
                   />
                 </div>
@@ -264,7 +258,6 @@ export default function App() {
             ) : (
               <IssueList
                 result={result}
-                onIssueHover={handleIssueHover}
                 onIssueClick={handleIssueClick}
               />
             )}

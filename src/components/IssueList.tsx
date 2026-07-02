@@ -6,13 +6,13 @@ import type { Issue, ScanResult } from '@/engine/types'
 
 interface IssueListProps {
   result: ScanResult
-  onIssueHover?: (highlightKey: string | null, label?: string | null) => void
   onIssueClick?: (highlightKey: string, label?: string | null) => void
 }
 
-export default function IssueList({ result, onIssueHover, onIssueClick }: IssueListProps) {
+export default function IssueList({ result, onIssueClick }: IssueListProps) {
   const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
   const filtered = filter === 'all' ? result.issues : result.issues.filter((i) => i.level === filter)
 
@@ -46,16 +46,23 @@ export default function IssueList({ result, onIssueHover, onIssueClick }: IssueL
           {filtered.length === 0 && (
             <div className="p-8 text-center text-muted text-sm">No issues found in this category.</div>
           )}
-          {filtered.map((issue, i) => (
-            <IssueRow
-              key={`${issue.id}-${i}`}
-              issue={issue}
-              expanded={expandedId === `${issue.id}-${i}`}
-              onToggle={() => setExpandedId(expandedId === `${issue.id}-${i}` ? null : `${issue.id}-${i}`)}
-              onHover={onIssueHover}
-              onLocate={onIssueClick}
-            />
-          ))}
+          {filtered.map((issue, i) => {
+            const rowKey = `${issue.id}-${i}`
+            const highlightKey = getHighlightKey(issue)
+            return (
+              <IssueRow
+                key={rowKey}
+                issue={issue}
+                expanded={expandedId === rowKey}
+                isSelected={selectedKey === highlightKey}
+                onToggle={() => setExpandedId(expandedId === rowKey ? null : rowKey)}
+                onLocate={(key, label) => {
+                  setSelectedKey(key)
+                  onIssueClick?.(key, label)
+                }}
+              />
+            )
+          })}
         </div>
       </CardContent>
     </Card>
@@ -129,8 +136,8 @@ function CodeBlock({ code }: { code: string }) {
 interface IssueRowProps {
   issue: Issue
   expanded: boolean
+  isSelected?: boolean
   onToggle: () => void
-  onHover?: (highlightKey: string | null, label?: string | null) => void
   onLocate?: (highlightKey: string, label?: string | null) => void
 }
 
@@ -141,25 +148,13 @@ function getHighlightKey(issue: Issue): string {
   return issue.elementSelector
 }
 
-function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProps) {
+function IssueRow({ issue, expanded, isSelected, onToggle, onLocate }: IssueRowProps) {
   const levelConfig = {
     error: { variant: 'error' as const, label: 'Error' },
     warning: { variant: 'warning' as const, label: 'Warning' },
     info: { variant: 'muted' as const, label: 'Info' },
   }
   const cfg = levelConfig[issue.level]
-
-  const handleMouseEnter = () => {
-    if (onHover) {
-      onHover(getHighlightKey(issue), issue.title)
-    }
-  }
-
-  const handleMouseLeave = () => {
-    if (onHover) {
-      onHover(null, null)
-    }
-  }
 
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -170,10 +165,11 @@ function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProp
 
   return (
     <div
-      className="p-4 hover:bg-surface/50 transition-colors cursor-pointer"
-      onClick={onToggle}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={handleMouseLeave}
+      className={`p-4 hover:bg-surface/50 transition-colors cursor-pointer ${isSelected ? 'bg-primary/10 border-l-2 border-primary' : ''}`}
+      onClick={(e) => {
+        onToggle()
+        if (onLocate) onLocate(getHighlightKey(issue), issue.title)
+      }}
     >
       <div className="flex items-start justify-between gap-4">
         <div className="flex-1 min-w-0">

@@ -293,6 +293,23 @@ async function fetchHtmlMultiStrategy(
 // ---------------------------------------------------------------------------
 
 /**
+ * Serialize a parsed Document back to HTML string,
+ * preserving data-a11y-idx attributes added by assignElementIndices.
+ */
+function serializeDocument(doc: Document): string {
+  const html = doc.documentElement.outerHTML
+  const doctype = doc.doctype
+  if (doctype) {
+    let doctypeStr = '<!DOCTYPE ' + doctype.name
+    if (doctype.publicId) doctypeStr += ' PUBLIC "' + doctype.publicId + '"'
+    if (doctype.systemId) doctypeStr += ' "' + doctype.systemId + '"'
+    doctypeStr += '>'
+    return doctypeStr + '\n' + html
+  }
+  return html
+}
+
+/**
  * Scan a raw HTML string for accessibility issues.
  */
 export function scanHtml(html: string, url?: string): ScanResult {
@@ -302,6 +319,9 @@ export function scanHtml(html: string, url?: string): ScanResult {
   const doc = parser.parseFromString(html, 'text/html')
 
   assignElementIndices(doc)
+
+  // Serialize with data-a11y-idx attributes for accurate iframe positioning
+  const indexedHtml = serializeDocument(doc)
 
   const issues = attachFixCodes(runRules(doc))
   const { errors, warnings, infos } = countByLevel(issues)
@@ -319,7 +339,7 @@ export function scanHtml(html: string, url?: string): ScanResult {
     issues,
     scannedAt: new Date().toISOString(),
     durationMs: Math.round(endTime - startTime),
-    html,
+    html: indexedHtml,
   }
 }
 
@@ -347,6 +367,9 @@ export async function scanUrl(rawUrl: string): Promise<ScanResult> {
 
   assignElementIndices(doc)
 
+  // Serialize with data-a11y-idx attributes for accurate iframe positioning
+  const indexedHtml = serializeDocument(doc)
+
   console.debug(
     `[accessibility-analyzer] HTML parsed in ${(parseEnd - parseStart).toFixed(2)}ms (${html.length} chars)`
   )
@@ -368,7 +391,7 @@ export async function scanUrl(rawUrl: string): Promise<ScanResult> {
     scannedAt: new Date().toISOString(),
     durationMs: Math.round(endTime - startTime),
     fetchStrategy: strategy,
-    html,
+    html: indexedHtml,
   }
 }
 
