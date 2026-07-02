@@ -17,12 +17,16 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [highlightSelector, setHighlightSelector] = useState<string | null>(null)
+  const [highlightLabel, setHighlightLabel] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
 
   useEffect(() => {
     setHistory(getHistory())
     const last = getLastResult()
-    if (last) setResult(last)
+    if (last) {
+      setResult(last)
+      setShowPreview(!!last.html)
+    }
   }, [])
 
   const handleScanUrl = useCallback(async (url: string) => {
@@ -63,6 +67,7 @@ export default function App() {
     setResult(null)
     setError(null)
     setHighlightSelector(null)
+    setHighlightLabel(null)
     setShowPreview(false)
     clearLastResult()
   }
@@ -89,12 +94,14 @@ export default function App() {
     window.print()
   }
 
-  const handleIssueHover = useCallback((selector: string | null) => {
+  const handleIssueHover = useCallback((selector: string | null, label?: string | null) => {
     setHighlightSelector(selector)
+    setHighlightLabel(label ?? null)
   }, [])
 
-  const handleIssueClick = useCallback((selector: string) => {
+  const handleIssueClick = useCallback((selector: string, label?: string | null) => {
     setHighlightSelector(selector)
+    setHighlightLabel(label ?? null)
     setShowPreview(true)
   }, [])
 
@@ -243,6 +250,7 @@ export default function App() {
                     html={result.html}
                     baseUrl={result.url && result.url !== '(pasted HTML)' ? result.url : null}
                     highlightSelector={highlightSelector}
+                    highlightLabel={highlightLabel}
                   />
                 </div>
                 <div className="lg:order-2">

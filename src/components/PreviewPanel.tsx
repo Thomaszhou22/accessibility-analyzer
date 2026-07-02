@@ -7,9 +7,24 @@ interface PreviewPanelProps {
   html: string
   baseUrl: string | null
   highlightSelector: string | null
+  highlightLabel?: string | null
 }
 
 const HIGHLIGHT_SCRIPT = `
+<style>
+@keyframes a11y-pulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7); }
+  50% { box-shadow: 0 0 0 8px rgba(239, 68, 68, 0); }
+}
+@keyframes a11y-slide-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes a11y-backdrop-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+</style>
 <script>
 (function() {
   // Assign indices to all elements (mirrors scanner's assignElementIndices)
@@ -19,7 +34,7 @@ const HIGHLIGHT_SCRIPT = `
   }
 
   function clearHighlights() {
-    document.querySelectorAll('.a11y-hl-overlay, .a11y-hl-label').forEach(function(el) { el.remove(); });
+    document.querySelectorAll('.a11y-hl-overlay, .a11y-hl-label, .a11y-hl-backdrop').forEach(function(el) { el.remove(); });
     document.querySelectorAll('*').forEach(function(el) {
       if (el.style.outline === '3px solid rgb(239, 68, 68)' || el.style.outline === '3px solid #ef4444') {
         el.style.outline = '';
@@ -28,7 +43,7 @@ const HIGHLIGHT_SCRIPT = `
     });
   }
 
-  function highlightElement(selector) {
+  function highlightElement(selector, labelText) {
     clearHighlights();
     var el;
     try {
@@ -42,26 +57,45 @@ const HIGHLIGHT_SCRIPT = `
     var scrollY = window.scrollY || window.pageYOffset;
     var scrollX = window.scrollX || window.pageXOffset;
 
+    // Dim the rest of the page
+    var backdrop = document.createElement('div');
+    backdrop.className = 'a11y-hl-backdrop';
+    backdrop.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: ' + document.documentElement.scrollHeight + 'px; background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
+    document.body.appendChild(backdrop);
+
+    // Main highlight box
     var overlay = document.createElement('div');
     overlay.className = 'a11y-hl-overlay';
-    overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY) + 'px; left: ' + (rect.left + scrollX) + 'px; width: ' + rect.width + 'px; height: ' + rect.height + 'px; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.12); pointer-events: none; z-index: 2147483646; box-sizing: border-box; transition: all 0.3s ease; border-radius: 2px;';
+    var padding = 4;
+    overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; animation: a11y-pulse 1.5s ease-in-out infinite;';
     document.body.appendChild(overlay);
 
+    // "Hole" in backdrop for the highlighted element (bring it above backdrop)
+    var cutout = document.createElement('div');
+    cutout.className = 'a11y-hl-overlay';
+    cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0); border-radius: 4px;';
+    document.body.appendChild(cutout);
+
+    // Label with issue title
     var label = document.createElement('div');
     label.className = 'a11y-hl-label';
-    label.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - 28) + 'px; left: ' + (rect.left + scrollX) + 'px; background: #ef4444; color: white; font-size: 12px; font-family: system-ui, sans-serif; padding: 2px 8px; border-radius: 3px; z-index: 2147483647; pointer-events: none; white-space: nowrap;';
-    label.textContent = 'Accessibility Issue';
+    var labelTop = rect.top + scrollY - padding - 32;
+    if (labelTop < scrollY) labelTop = rect.top + scrollY + rect.height + padding + 4;
+    label.style.cssText = 'position: absolute; top: ' + labelTop + 'px; left: ' + (rect.left + scrollX - padding) + 'px; background: #ef4444; color: white; font-size: 13px; font-weight: 600; font-family: system-ui, -apple-system, sans-serif; padding: 4px 12px; border-radius: 6px; z-index: 2147483647; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); animation: a11y-slide-in 0.3s ease; max-width: 400px; overflow: hidden; text-overflow: ellipsis;';
+    label.textContent = labelText || 'Accessibility Issue';
     document.body.appendChild(label);
 
     el.style.outline = '3px solid #ef4444';
     el.style.outlineOffset = '2px';
+    el.style.position = el.style.position || 'static';
+    el.style.zIndex = '2147483645';
 
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
   }
 
   window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'a11y-highlight') {
-      highlightElement(e.data.selector);
+      highlightElement(e.data.selector, e.data.label);
     } else if (e.data && e.data.type === 'a11y-clear') {
       clearHighlights();
     }
@@ -74,7 +108,7 @@ const HIGHLIGHT_SCRIPT = `
 </script>
 `
 
-export default function PreviewPanel({ html, baseUrl, highlightSelector }: PreviewPanelProps) {
+export default function PreviewPanel({ html, baseUrl, highlightSelector, highlightLabel }: PreviewPanelProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
   const [zoom, setZoom] = useState(100)
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
@@ -112,11 +146,11 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector }: Previ
     if (!iframeRef.current || !iframeReady) return
     const iframe = iframeRef.current
     if (highlightSelector) {
-      iframe.contentWindow?.postMessage({ type: 'a11y-highlight', selector: highlightSelector }, '*')
+      iframe.contentWindow?.postMessage({ type: 'a11y-highlight', selector: highlightSelector, label: highlightLabel || 'Accessibility Issue' }, '*')
     } else {
       iframe.contentWindow?.postMessage({ type: 'a11y-clear' }, '*')
     }
-  }, [highlightSelector, iframeReady])
+  }, [highlightSelector, highlightLabel, iframeReady])
 
   // Reset iframe ready state when srcdoc changes
   useEffect(() => {

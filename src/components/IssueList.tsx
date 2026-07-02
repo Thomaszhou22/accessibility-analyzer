@@ -6,8 +6,8 @@ import type { Issue, ScanResult } from '@/engine/types'
 
 interface IssueListProps {
   result: ScanResult
-  onIssueHover?: (highlightKey: string | null) => void
-  onIssueClick?: (highlightKey: string) => void
+  onIssueHover?: (highlightKey: string | null, label?: string | null) => void
+  onIssueClick?: (highlightKey: string, label?: string | null) => void
 }
 
 export default function IssueList({ result, onIssueHover, onIssueClick }: IssueListProps) {
@@ -130,8 +130,8 @@ interface IssueRowProps {
   issue: Issue
   expanded: boolean
   onToggle: () => void
-  onHover?: (highlightKey: string | null) => void
-  onLocate?: (highlightKey: string) => void
+  onHover?: (highlightKey: string | null, label?: string | null) => void
+  onLocate?: (highlightKey: string, label?: string | null) => void
 }
 
 function getHighlightKey(issue: Issue): string {
@@ -151,20 +151,20 @@ function IssueRow({ issue, expanded, onToggle, onHover, onLocate }: IssueRowProp
 
   const handleMouseEnter = () => {
     if (onHover) {
-      onHover(getHighlightKey(issue))
+      onHover(getHighlightKey(issue), issue.title)
     }
   }
 
   const handleMouseLeave = () => {
     if (onHover) {
-      onHover(null)
+      onHover(null, null)
     }
   }
 
   const handleLocate = (e: React.MouseEvent) => {
     e.stopPropagation()
     if (onLocate) {
-      onLocate(getHighlightKey(issue))
+      onLocate(getHighlightKey(issue), issue.title)
     }
   }
 
