@@ -112,9 +112,12 @@ export default function App() {
                 <p className="text-xs text-muted">
                   {result.url || 'Pasted HTML'} · {result.durationMs}ms
                   {result.fetchStrategy && (
-                    <span className="ml-2 px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono">
-                      {result.fetchStrategy}
-                    </span>
+                    <>
+                      {' · '}
+                      <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono">
+                        {result.fetchStrategy}
+                      </span>
+                    </>
                   )}
                 </p>
               </div>
