@@ -297,7 +297,7 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
           <iframe
             ref={iframeRef}
             srcDoc={srcdoc}
-            sandbox="allow-same-origin allow-scripts"
+            sandbox="allow-same-origin allow-scripts allow-forms"
             className="w-full h-full border-0"
             style={{
               minHeight: '400px',
