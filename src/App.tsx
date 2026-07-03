@@ -19,6 +19,9 @@ export default function App() {
   const [highlightSelector, setHighlightSelector] = useState<string | null>(null)
   const [highlightLabel, setHighlightLabel] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
+  const [pageResults, setPageResults] = useState<Map<string, ScanResult>>(new Map())
+  const [currentPageUrl, setCurrentPageUrl] = useState<string | null>(null)
+  const [initialUrl, setInitialUrl] = useState<string | null>(null)
 
   useEffect(() => {
     setHistory(getHistory())
@@ -29,7 +32,7 @@ export default function App() {
     }
   }, [])
 
-  const handleScanUrl = useCallback(async (url: string) => {
+  const handleScanUrl = useCallback(async (url: string, isNavigation = false) => {
     setLoading(true)
     setError(null)
     try {
@@ -37,6 +40,13 @@ export default function App() {
       setResult(res)
       saveLastResult(res)
       setShowPreview(!!res.html)
+      setCurrentPageUrl(url)
+      if (!isNavigation) {
+        setInitialUrl(url)
+        setPageResults(new Map([[url, res]]))
+      } else {
+        setPageResults(prev => new Map(prev).set(url, res))
+      }
       const updated = addToHistory(res)
       setHistory(updated)
     } catch (err) {
@@ -69,6 +79,9 @@ export default function App() {
     setHighlightSelector(null)
     setHighlightLabel(null)
     setShowPreview(false)
+    setPageResults(new Map())
+    setCurrentPageUrl(null)
+    setInitialUrl(null)
     clearLastResult()
   }
 
@@ -95,10 +108,27 @@ export default function App() {
   }
 
   const handleIssueClick = useCallback((selector: string, label?: string | null) => {
-    setHighlightSelector(selector)
-    setHighlightLabel(label ?? null)
-    setShowPreview(true)
+    if (!selector || !selector.trim()) {
+      setHighlightSelector(null)
+      setHighlightLabel(null)
+    } else {
+      setHighlightSelector(selector)
+      setHighlightLabel(label ?? null)
+      setShowPreview(true)
+    }
   }, [])
+
+  const handleNavigate = useCallback((url: string) => {
+    const alreadyScanned = pageResults.get(url)
+    if (alreadyScanned) {
+      setResult(alreadyScanned)
+      setCurrentPageUrl(url)
+      setHighlightSelector(null)
+      setHighlightLabel(null)
+    } else {
+      handleScanUrl(url, true)
+    }
+  }, [pageResults, handleScanUrl])
 
   return (
     <div className="min-h-screen">
@@ -246,6 +276,7 @@ export default function App() {
                     baseUrl={result.url && result.url !== '(pasted HTML)' ? result.url : null}
                     highlightSelector={highlightSelector}
                     highlightLabel={highlightLabel}
+                    onNavigate={handleNavigate}
                   />
                 </div>
                 <div className="lg:order-2">

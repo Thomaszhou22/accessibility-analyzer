@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { Button } from '@/components/ui/Button'
@@ -13,6 +13,20 @@ export default function IssueList({ result, onIssueClick }: IssueListProps) {
   const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
+
+  const isFirstRender = useRef(true)
+  const onIssueClickRef = useRef(onIssueClick)
+  onIssueClickRef.current = onIssueClick
+
+  useEffect(() => {
+    if (isFirstRender.current) {
+      isFirstRender.current = false
+      return
+    }
+    setExpandedId(null)
+    setSelectedKey(null)
+    onIssueClickRef.current?.('', null)
+  }, [filter])
 
   const filtered = filter === 'all' ? result.issues : result.issues.filter((i) => i.level === filter)
 
@@ -167,8 +181,13 @@ function IssueRow({ issue, expanded, isSelected, onToggle, onLocate }: IssueRowP
     <div
       className={`p-4 hover:bg-surface/50 transition-colors cursor-pointer ${isSelected ? 'bg-primary/10 border-l-2 border-primary' : ''}`}
       onClick={(e) => {
+        const wasExpanded = expanded
         onToggle()
-        if (onLocate) onLocate(getHighlightKey(issue), issue.title)
+        if (wasExpanded) {
+          if (onLocate) onLocate('', null)
+        } else {
+          if (onLocate) onLocate(getHighlightKey(issue), issue.title)
+        }
       }}
     >
       <div className="flex items-start justify-between gap-4">

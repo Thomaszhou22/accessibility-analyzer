@@ -8,6 +8,7 @@ interface PreviewPanelProps {
   baseUrl: string | null
   highlightSelector: string | null
   highlightLabel?: string | null
+  onNavigate?: (url: string) => void
 }
 
 const HIGHLIGHT_SCRIPT = `
@@ -56,10 +57,11 @@ const HIGHLIGHT_SCRIPT = `
       var scrollY = window.scrollY || window.pageYOffset;
       var scrollX = window.scrollX || window.pageXOffset;
 
-      // Dim the rest of the page
+      // Dim the rest of the page - use viewport height for better coverage
       var backdrop = document.createElement('div');
       backdrop.className = 'a11y-hl-backdrop';
-      backdrop.style.cssText = 'position: absolute; top: 0; left: 0; width: 100%; height: ' + document.documentElement.scrollHeight + 'px; background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
+      var pageHeight = Math.max(document.documentElement.scrollHeight, document.documentElement.offsetHeight, window.innerHeight);
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: ' + pageHeight + 'px; background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
       document.body.appendChild(backdrop);
 
       // Main highlight box
@@ -72,7 +74,7 @@ const HIGHLIGHT_SCRIPT = `
       // "Hole" in backdrop for the highlighted element (bring it above backdrop)
       var cutout = document.createElement('div');
       cutout.className = 'a11y-hl-overlay';
-      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0); border-radius: 4px;';
+      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45); border-radius: 4px;';
       document.body.appendChild(cutout);
 
       // Label with issue title
@@ -99,19 +101,42 @@ const HIGHLIGHT_SCRIPT = `
     }
   });
 
+  // Intercept link clicks to notify parent
+  document.addEventListener('click', function(e) {
+    var target = e.target;
+    while (target && target.tagName !== 'A') {
+      target = target.parentElement;
+    }
+    if (target && target.tagName === 'A' && target.href) {
+      var href = target.getAttribute('href');
+      if (href && !href.startsWith('#') && !href.startsWith('javascript:') && !href.startsWith('mailto:')) {
+        e.preventDefault();
+        var absoluteUrl;
+        try {
+          absoluteUrl = new URL(href, window.location.href).href;
+        } catch(err) {
+          absoluteUrl = href;
+        }
+        window.parent.postMessage({ type: 'a11y-navigate', url: absoluteUrl }, '*');
+      }
+    }
+  }, true);
+
   window.addEventListener('load', function() {
-    window.parent.postMessage({ type: 'a11y-preview-ready' }, '*');
+    window.parent.postMessage({ type: 'a11y-preview-ready', width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }, '*');
   });
 })();
 </script>
 `
 
-export default function PreviewPanel({ html, baseUrl, highlightSelector, highlightLabel }: PreviewPanelProps) {
+export default function PreviewPanel({ html, baseUrl, highlightSelector, highlightLabel, onNavigate }: PreviewPanelProps) {
   const iframeRef = useRef<HTMLIFrameElement>(null)
+  const containerRef = useRef<HTMLDivElement>(null)
   const [zoom, setZoom] = useState(100)
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
   const [iframeReady, setIframeReady] = useState(false)
   const [visible, setVisible] = useState(true)
+  const [iframeDimensions, setIframeDimensions] = useState({ width: 0, height: 0 })
 
   // Build srcdoc with URL rewriting and injected highlight script
   const srcdoc = useMemo(() => {
@@ -128,22 +153,29 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
     return content
   }, [html, baseUrl])
 
-  // Listen for iframe ready message
+  // Listen for iframe ready message and navigation
   useEffect(() => {
     const handler = (e: MessageEvent) => {
       if (e.data && e.data.type === 'a11y-preview-ready') {
         setIframeReady(true)
+        if (e.data.width && e.data.height) {
+          setIframeDimensions({ width: e.data.width, height: e.data.height })
+        }
+      } else if (e.data && e.data.type === 'a11y-navigate') {
+        if (onNavigate && e.data.url) {
+          onNavigate(e.data.url)
+        }
       }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [])
+  }, [onNavigate])
 
   // Send highlight messages to iframe
   useEffect(() => {
     if (!iframeRef.current || !iframeReady) return
     const iframe = iframeRef.current
-    if (highlightSelector) {
+    if (highlightSelector && highlightSelector.trim()) {
       iframe.contentWindow?.postMessage({ type: 'a11y-highlight', selector: highlightSelector, label: highlightLabel || 'Accessibility Issue' }, '*')
     } else {
       iframe.contentWindow?.postMessage({ type: 'a11y-clear' }, '*')
@@ -154,6 +186,15 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
   useEffect(() => {
     setIframeReady(false)
   }, [srcdoc])
+
+  // Auto-calculate initial zoom to fit the page
+  useEffect(() => {
+    if (iframeReady && iframeDimensions.width > 0 && containerRef.current) {
+      const containerWidth = containerRef.current.offsetWidth
+      const calculatedZoom = Math.min(100, Math.floor((containerWidth / iframeDimensions.width) * 100))
+      setZoom(Math.max(50, calculatedZoom))
+    }
+  }, [iframeReady, iframeDimensions.width])
 
   const deviceWidth = device === 'desktop' ? '100%' : '375px'
 
@@ -223,7 +264,7 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
       </div>
 
       {/* Iframe container */}
-      <div className="flex-1 overflow-auto bg-white relative" style={{ minHeight: '400px' }}>
+      <div ref={containerRef} className="flex-1 overflow-auto bg-white relative" style={{ minHeight: '400px' }}>
         <div
           className="mx-auto h-full transition-all duration-300"
           style={{ width: deviceWidth, maxWidth: '100%' }}

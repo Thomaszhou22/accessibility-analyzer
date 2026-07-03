@@ -123,6 +123,12 @@ export default function ReportLayout({ result }: ReportLayoutProps) {
                 <p style={{ marginLeft: '12px', fontStyle: 'italic' }}>{issue.recommendation}</p>
               </div>
             )}
+            {issue.fixCode && (
+              <div style={{ marginTop: '6px' }}>
+                <strong style={{ fontSize: '10pt', color: '#4f46e5' }}>Reference Fix Code:</strong>
+                <code className="print-code">{issue.fixCode}</code>
+              </div>
+            )}
           </div>
         ))}
       </div>
