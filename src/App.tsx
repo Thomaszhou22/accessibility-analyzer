@@ -227,8 +227,8 @@ export default function App() {
             <div className="flex items-center justify-between">
               <div>
                 <h2 className="text-lg font-semibold text-white">Scan Results</h2>
-                <p className="text-xs text-muted">
-                  {result.url || 'Pasted HTML'} · {result.durationMs}ms
+                <p className="text-xs text-muted max-w-[300px] sm:max-w-md">
+                  <span className="truncate inline-block align-bottom">{result.url || 'Pasted HTML'}</span> · {result.durationMs}ms
                   {result.fetchStrategy && (
                     <>
                       {' · '}

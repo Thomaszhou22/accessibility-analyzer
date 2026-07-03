@@ -122,9 +122,34 @@ const HIGHLIGHT_SCRIPT = `
     }
   }, true);
 
-  window.addEventListener('load', function() {
-    window.parent.postMessage({ type: 'a11y-preview-ready', width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }, '*');
-  });
+  // Intercept form submissions
+  document.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var form = e.target;
+    var action = form.action || window.location.href;
+    var method = (form.method || 'GET').toUpperCase();
+    
+    if (method === 'GET') {
+      var formData = new FormData(form);
+      var params = new URLSearchParams(formData);
+      var searchUrl;
+      try {
+        searchUrl = new URL(action);
+        params.forEach(function(value, key) {
+          searchUrl.searchParams.set(key, value);
+        });
+        window.parent.postMessage({ type: 'a11y-navigate', url: searchUrl.href }, '*');
+      } catch(err) {
+        console.warn('[a11y] Failed to build search URL:', err);
+      }
+    } else {
+      // POST requests - just navigate to the action URL
+      window.parent.postMessage({ type: 'a11y-navigate', url: action }, '*');
+    }
+  }, true);
+
+  // Send ready message early to avoid zoom delay
+  window.parent.postMessage({ type: 'a11y-preview-ready', width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }, '*');
 })();
 </script>
 `
