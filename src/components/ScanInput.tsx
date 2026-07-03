@@ -84,7 +84,7 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
                 </Button>
               </div>
               {showHint && (
-                <p className="text-xs text-accent flex items-center gap-1">
+                <p className="text-xs text-accent flex items-start gap-1 break-all">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
@@ -129,7 +129,7 @@ function HtmlExtractTips() {
         onClick={() => setOpen(!open)}
         className="w-full flex items-center justify-between px-4 py-2.5 text-xs text-muted hover:text-white transition-colors"
       >
-        <span className="flex items-center gap-1.5">
+        <span className="flex items-start gap-1 break-all.5">
           <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
@@ -145,7 +145,7 @@ function HtmlExtractTips() {
       {open && (
         <div className="px-4 pb-4 space-y-3 text-xs text-muted-foreground border-t border-border pt-3">
           <div>
-            <div className="flex items-center gap-1.5 text-white font-medium mb-1">
+            <div className="flex items-start gap-1 break-all.5 text-white font-medium mb-1">
               <span className="w-4 h-4 rounded bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">1</span>
               View Page Source (entire page)
             </div>
@@ -154,7 +154,7 @@ function HtmlExtractTips() {
             </p>
           </div>
           <div>
-            <div className="flex items-center gap-1.5 text-white font-medium mb-1">
+            <div className="flex items-start gap-1 break-all.5 text-white font-medium mb-1">
               <span className="w-4 h-4 rounded bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">2</span>
               DevTools (specific section)
             </div>
@@ -163,7 +163,7 @@ function HtmlExtractTips() {
             </p>
           </div>
           <div>
-            <div className="flex items-center gap-1.5 text-white font-medium mb-1">
+            <div className="flex items-start gap-1 break-all.5 text-white font-medium mb-1">
               <span className="w-4 h-4 rounded bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">3</span>
               Inspect element shortcut
             </div>
@@ -172,7 +172,7 @@ function HtmlExtractTips() {
             </p>
           </div>
           <div className="border-t border-border pt-3 mt-3">
-            <div className="flex items-center gap-1.5 text-white font-medium mb-2">
+            <div className="flex items-start gap-1 break-all.5 text-white font-medium mb-2">
               <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
@@ -198,7 +198,7 @@ function HtmlExtractTips() {
             </div>
           </div>
           <div className="border-t border-border pt-3 mt-3">
-            <div className="flex items-center gap-1.5 text-white font-medium mb-2">
+            <div className="flex items-start gap-1 break-all.5 text-white font-medium mb-2">
               <svg className="w-3.5 h-3.5 text-primary" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
