@@ -69,6 +69,11 @@ const wcagCriteriaMap: Record<string, string[]> = {
   'aria-valid': ['4.1.2 Name, Role, Value'],
   'list-structure': ['1.3.1 Info and Relationships'],
   'media-caption': ['1.2.2 Captions (Prerecorded)'],
+  'html-title': ['2.4.2 Page Titled'],
+  'table-scope': ['1.3.1 Info and Relationships'],
+  'empty-heading': ['1.3.1 Info and Relationships', '2.4.6 Headings and Labels'],
+  'accesskey': ['2.1.4 Character Key Shortcuts'],
+  'lang-valid': ['3.1.1 Language of Page'],
 }
 
 function createIssue(
@@ -152,7 +157,9 @@ const imgAltRule: Rule = {
   },
 }
 
+
 // ---------- Rule 2: color-contrast ----------
+// Checks inline styles, <style> tag CSS rules, inherited styles, and HTML color attributes.
 const colorContrastRule: Rule = {
   id: 'color-contrast',
   name: 'Color Contrast',
@@ -161,12 +168,9 @@ const colorContrastRule: Rule = {
   wcagLevel: 'AA',
   evaluate(doc: Document): Issue[] {
     const issues: Issue[] = []
-    const textElements = doc.querySelectorAll(
-      'p, span, a, button, label, h1, h2, h3, h4, h5, h6, li, td, th, div, blockquote, caption, figcaption'
-    )
 
     function parseColor(color: string): [number, number, number] | null {
-      if (!color || color === 'inherit' || color === 'initial' || color === 'unset') {
+      if (!color || color === 'inherit' || color === 'initial' || color === 'unset' || color === 'transparent') {
         return null
       }
       const hexMatch = color.match(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i)
@@ -189,7 +193,15 @@ const colorContrastRule: Rule = {
       if (rgbMatch) {
         return [parseInt(rgbMatch[1]), parseInt(rgbMatch[2]), parseInt(rgbMatch[3])]
       }
-      return null
+      const namedColors: Record<string, [number, number, number]> = {
+        black: [0, 0, 0], white: [255, 255, 255], red: [255, 0, 0],
+        green: [0, 128, 0], blue: [0, 0, 255], yellow: [255, 255, 0],
+        gray: [128, 128, 128], grey: [128, 128, 128], silver: [192, 192, 192],
+        maroon: [128, 0, 0], navy: [0, 0, 128], purple: [128, 0, 128],
+        teal: [0, 128, 128], aqua: [0, 255, 255], fuchsia: [255, 0, 255],
+        lime: [0, 255, 0], olive: [128, 128, 0], orange: [255, 165, 0],
+      }
+      return namedColors[color.toLowerCase()] || null
     }
 
     function getLuminance([r, g, b]: [number, number, number]): number {
@@ -211,15 +223,103 @@ const colorContrastRule: Rule = {
       return (lighter + 0.05) / (darker + 0.05)
     }
 
+    // Parse <style> tags to build a simple CSS rule map
+    const styleRules: { selector: string; color?: string; bgColor?: string }[] = []
+    const styleTags = doc.querySelectorAll('style')
+    styleTags.forEach((styleTag) => {
+      const cssText = styleTag.textContent || ''
+      const ruleRegex = /([^{}]+)\{([^}]*)\}/g
+      let match: RegExpExecArray | null
+      while ((match = ruleRegex.exec(cssText)) !== null) {
+        const selectorPart = match[1].trim()
+        const declarations = match[2].trim()
+        const colorMatch = declarations.match(/(?:^|;|\s)color\s*:\s*([^;]+)/i)
+        const bgMatch = declarations.match(/background(?:-color)?\s*:\s*([^;]+)/i)
+        if (colorMatch || bgMatch) {
+          selectorPart.split(',').forEach((sel) => {
+            styleRules.push({
+              selector: sel.trim(),
+              color: colorMatch?.[1]?.trim(),
+              bgColor: bgMatch?.[1]?.trim(),
+            })
+          })
+        }
+      }
+    })
+
+    function getEffectiveStyles(el: Element): { color?: string; bgColor?: string } {
+      let color: string | undefined
+      let bgColor: string | undefined
+
+      // 1. Inline style (highest priority)
+      const inlineStyle = el.getAttribute('style') || ''
+      const inlineColor = inlineStyle.match(/(?:^|;|\s)color\s*:\s*([^;]+)/i)
+      const inlineBg = inlineStyle.match(/background(?:-color)?\s*:\s*([^;]+)/i)
+      if (inlineColor) color = inlineColor[1].trim()
+      if (inlineBg) bgColor = inlineBg[1].trim()
+
+      // 2. <style> tag rules (last match wins, simulating cascade)
+      if (!color || !bgColor) {
+        for (const rule of styleRules) {
+          try {
+            if (el.matches(rule.selector)) {
+              if (!color && rule.color) color = rule.color
+              if (!bgColor && rule.bgColor) bgColor = rule.bgColor
+            }
+          } catch {
+            // Invalid selector, skip
+          }
+        }
+      }
+
+      // 3. HTML color attributes (text, bgcolor)
+      if (!color) {
+        const textAttr = el.getAttribute('text')
+        if (textAttr) color = textAttr
+      }
+      if (!bgColor) {
+        const bgcolorAttr = el.getAttribute('bgcolor')
+        if (bgcolorAttr) bgColor = bgcolorAttr
+      }
+
+      return { color, bgColor }
+    }
+
+    // Walk up the tree for inherited values
+    function getInheritedStyles(el: Element): { color?: string; bgColor?: string } {
+      let color: string | undefined
+      let bgColor: string | undefined
+      let parent: Element | null = el.parentElement
+      while (parent && (!color || !bgColor)) {
+        const parentStyles = getEffectiveStyles(parent)
+        if (!color && parentStyles.color) color = parentStyles.color
+        if (!bgColor && parentStyles.bgColor) bgColor = parentStyles.bgColor
+        parent = parent.parentElement
+      }
+      if (!color) color = '#000000'
+      if (!bgColor) bgColor = '#ffffff'
+      return { color, bgColor }
+    }
+
+    const textElements = doc.querySelectorAll(
+      'p, span, a, button, label, h1, h2, h3, h4, h5, h6, li, td, th, div, blockquote, caption, figcaption'
+    )
+
+    const checked = new Set<Element>()
     textElements.forEach((el) => {
-      const style = el.getAttribute('style') || ''
-      const colorMatch = style.match(/color\s*:\s*([^;]+)/i)
-      const bgMatch = style.match(/background(?:-color)?\s*:\s*([^;]+)/i)
+      if (checked.has(el)) return
+      checked.add(el)
 
-      if (colorMatch && bgMatch) {
-        const fg = parseColor(colorMatch[1].trim())
-        const bg = parseColor(bgMatch[1].trim())
+      let { color, bgColor } = getEffectiveStyles(el)
+      if (!color || !bgColor) {
+        const inherited = getInheritedStyles(el)
+        if (!color) color = inherited.color
+        if (!bgColor) bgColor = inherited.bgColor
+      }
 
+      if (color && bgColor) {
+        const fg = parseColor(color)
+        const bg = parseColor(bgColor)
         if (fg && bg) {
           const ratio = getContrastRatio(fg, bg)
           if (ratio < 4.5) {
@@ -232,11 +332,7 @@ const colorContrastRule: Rule = {
                 `Text color and background color have a contrast ratio of ${ratio.toFixed(2)}:1, which is below the WCAG AA minimum of 4.5:1.`,
                 el,
                 'Increase the contrast between text and background colors to at least 4.5:1 for normal text or 3:1 for large text.',
-                `/* Before: low contrast */
-.text { color: #999; background: #fff; }
-
-/* After: WCAG AA compliant (4.5:1+) */
-.text { color: #595959; background: #fff; }`,
+                `/* Before: low contrast */\n.text { color: #999; background: #fff; }\n\n/* After: WCAG AA compliant (4.5:1+) */\n.text { color: #595959; background: #fff; }`,
               )
             )
           }
@@ -1020,7 +1116,7 @@ const mediaCaptionRule: Rule = {
         issues.push(
           createIssue(
             'media-caption',
-            'info',
+            'warning',
             'A',
             'Audio element missing transcript or caption track',
             `Audio element has no <track> element and no visible transcript link. Consider providing a text alternative.`,
@@ -1049,6 +1145,183 @@ function truncateAttrValue(val: string, max = 50): string {
   return val.length > max ? val.slice(0, max) + '...' : val
 }
 
+// ---------- Rule 16: html-title ----------
+const htmlTitleRule: Rule = {
+  id: 'html-title',
+  name: 'Document Title',
+  description:
+    'The page must have a non-empty <title> element to help users identify the page.',
+  wcagLevel: 'A',
+  evaluate(doc: Document): Issue[] {
+    const issues: Issue[] = []
+    const title = doc.querySelector('title')
+
+    if (!title) {
+      issues.push(
+        createIssue(
+          'html-title',
+          'error',
+          'A',
+          'Missing <title> element',
+          'The page has no <title> element. Screen readers and browser tabs rely on the title to identify the page.',
+          doc.head || doc.documentElement,
+          'Add a descriptive <title> element inside the <head> section.',
+          '<head>\n  <title>Page Title - Site Name</title>\n</head>',
+        ),
+      )
+    } else if (!title.textContent?.trim()) {
+      issues.push(
+        createIssue(
+          'html-title',
+          'error',
+          'A',
+          'Empty <title> element',
+          'The <title> element exists but is empty. Provide a descriptive title for the page.',
+          title,
+          'Add descriptive text content inside the <title> element.',
+          '<title>Home Page - My Website</title>',
+        ),
+      )
+    }
+
+    return issues
+  },
+}
+
+// ---------- Rule 17: table-scope ----------
+const tableScopeRule: Rule = {
+  id: 'table-scope',
+  name: 'Table Header Scope',
+  description:
+    'Table header cells (<th>) should have a scope attribute to associate them with data cells for screen readers.',
+  wcagLevel: 'A',
+  evaluate(doc: Document): Issue[] {
+    const issues: Issue[] = []
+    const headers = doc.querySelectorAll('th')
+
+    headers.forEach((th) => {
+      if (!th.hasAttribute('scope')) {
+        issues.push(
+          createIssue(
+            'table-scope',
+            'warning',
+            'A',
+            'Table header missing scope attribute',
+            '<th> element has no scope attribute. Screen readers use scope to associate header cells with the correct data cells.',
+            th,
+            'Add a scope attribute to the <th> element. Use scope="col" for column headers or scope="row" for row headers.',
+            '<!-- Column header -->\n<th scope="col">Name</th>\n\n<!-- Row header -->\n<th scope="row">Total</th>',
+            'scope="col"',
+          ),
+        )
+      }
+    })
+
+    return issues
+  },
+}
+
+// ---------- Rule 18: empty-heading ----------
+const emptyHeadingRule: Rule = {
+  id: 'empty-heading',
+  name: 'Empty Heading',
+  description:
+    'Heading elements must have text content so screen readers can announce them properly.',
+  wcagLevel: 'A',
+  evaluate(doc: Document): Issue[] {
+    const issues: Issue[] = []
+    const headings = doc.querySelectorAll('h1, h2, h3, h4, h5, h6')
+
+    headings.forEach((heading) => {
+      const text = heading.textContent?.trim()
+      const hasAriaLabel = heading.hasAttribute('aria-label') && heading.getAttribute('aria-label')?.trim() !== ''
+
+      if (!text && !hasAriaLabel) {
+        issues.push(
+          createIssue(
+            'empty-heading',
+            'error',
+            'A',
+            `Empty <${heading.tagName.toLowerCase()}> heading`,
+            `Heading element has no text content and no aria-label. Empty headings confuse screen reader users navigating by headings.`,
+            heading,
+            'Add descriptive text content inside the heading element, or provide an aria-label.',
+            `<h2>Section Title</h2>`,
+          ),
+        )
+      }
+    })
+
+    return issues
+  },
+}
+
+// ---------- Rule 19: accesskey ----------
+const accesskeyRule: Rule = {
+  id: 'accesskey',
+  name: 'Accesskey Attribute',
+  description:
+    'Accesskey attributes can conflict with screen reader shortcuts and browser shortcuts. Use with caution.',
+  wcagLevel: 'A',
+  evaluate(doc: Document): Issue[] {
+    const issues: Issue[] = []
+    const elements = doc.querySelectorAll('[accesskey]')
+
+    elements.forEach((el) => {
+      issues.push(
+        createIssue(
+          'accesskey',
+          'warning',
+          'A',
+          `Element uses accesskey="${el.getAttribute('accesskey')}"`,
+          'The accesskey attribute can conflict with screen reader, browser, or operating system shortcuts. This can cause unexpected behavior for assistive technology users.',
+          el,
+          'Avoid using accesskey. Instead, provide keyboard navigation through proper focus management and semantic HTML.',
+          '<!-- Remove accesskey and use proper navigation -->\n<a href="/settings">Settings</a>',
+        ),
+      )
+    })
+
+    return issues
+  },
+}
+
+// ---------- Rule 20: lang-valid ----------
+const langValidRule: Rule = {
+  id: 'lang-valid',
+  name: 'Valid Language Code',
+  description:
+    'The lang attribute must contain a valid language code (e.g., "en", "zh-CN").',
+  wcagLevel: 'A',
+  evaluate(doc: Document): Issue[] {
+    const issues: Issue[] = []
+    const htmlEl = doc.documentElement
+    const lang = htmlEl.getAttribute('lang')
+
+    if (lang && lang.trim()) {
+      const trimmed = lang.trim()
+      // Basic check: should look like a language code (2-3 letters optionally followed by -XX)
+      const validLangPattern = /^[a-zA-Z]{2,3}(-[a-zA-Z]{2,4})?$/
+      if (!validLangPattern.test(trimmed)) {
+        issues.push(
+          createIssue(
+            'lang-valid',
+            'warning',
+            'A',
+            `Invalid language code: "${trimmed}"`,
+            `The lang attribute value "${trimmed}" does not look like a valid language code. Valid codes follow the format like "en", "zh-CN", "ja", etc.`,
+            htmlEl,
+            'Use a valid language code. See IETF BCP 47 for the full specification.',
+            'lang="en"',
+          ),
+        )
+      }
+    }
+
+    return issues
+  },
+}
+
 // Export all rules
 export const rules: Rule[] = [
   imgAltRule,
@@ -1066,6 +1339,11 @@ export const rules: Rule[] = [
   ariaValidRule,
   listStructureRule,
   mediaCaptionRule,
+  htmlTitleRule,
+  tableScopeRule,
+  emptyHeadingRule,
+  accesskeyRule,
+  langValidRule,
 ]
 
 export const ruleMap: Record<string, Rule> = Object.fromEntries(

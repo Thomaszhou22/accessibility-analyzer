@@ -10,7 +10,12 @@ function calculateScore(
   warnings: number,
   infos: number
 ): number {
-  const score = 100 - errors * 5 - warnings * 2 - infos * 1
+  // Cap the deduction so very large pages don't all hit 0.
+  // Each error deducts 10 (capped at 80), each warning 4 (capped at 30), each info 1 (capped at 10).
+  const errorDeduction = Math.min(errors * 10, 80)
+  const warningDeduction = Math.min(warnings * 4, 30)
+  const infoDeduction = Math.min(infos * 1, 10)
+  const score = 100 - errorDeduction - warningDeduction - infoDeduction
   return Math.max(0, Math.min(100, score))
 }
 
@@ -109,6 +114,11 @@ const fixCodeMap: Record<string, string> = {
   'aria-valid': '<div role="button">Action</div>\n<div role="dialog">Modal</div>\n<div role="navigation">Nav</div>\n<div role="search">Search area</div>',
   'list-structure': '<!-- Before -->\n<ul>\n  <div>Not a list item</div>\n</ul>\n\n<!-- After -->\n<ul>\n  <li>Valid list item</li>\n</ul>',
   'media-caption': '<video src="demo.mp4">\n  <track kind="captions" src="captions.vtt" srclang="en" label="English" default />\n</video>',
+  'html-title': '<head>\n  <title>Page Title - Site Name</title>\n</head>',
+  'table-scope': '<!-- Column header -->\n<th scope="col">Name</th>\n\n<!-- Row header -->\n<th scope="row">Total</th>',
+  'empty-heading': '<h2>Section Title</h2>',
+  'accesskey': '<!-- Remove accesskey and use proper navigation -->\n<a href="/settings">Settings</a>',
+  'lang-valid': '<html lang="en">',
 }
 
 function attachFixCodes(issues: Issue[]): Issue[] {
