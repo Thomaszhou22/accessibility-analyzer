@@ -89,10 +89,10 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onCl
                   e.stopPropagation()
                   onToggleFavorite(entry)
                 }}
-                className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-md transition-all ${
+                className={`shrink-0 w-7 h-7 flex items-center justify-center rounded-md ${
                   isFavorited(entry.url)
                     ? 'text-warning hover:text-warning/70 hover:bg-warning/10'
-                    : 'opacity-0 group-hover:opacity-100 text-muted hover:text-warning hover:bg-warning/10'
+                    : 'opacity-0 group-hover:opacity-100 text-muted hover:text-warning hover:bg-warning/10 transition-opacity duration-100'
                 }`}
                 title={isFavorited(entry.url) ? 'Remove from favorites' : 'Add to favorites'}
               >
@@ -105,7 +105,7 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onCl
                   e.stopPropagation()
                   onRemove(entry.url)
                 }}
-                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-danger hover:bg-danger/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-danger hover:bg-danger/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-100"
                 title="Remove"
               >
                 <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">

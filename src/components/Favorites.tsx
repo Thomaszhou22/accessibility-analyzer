@@ -81,7 +81,7 @@ export default function Favorites({ favorites, onSelect, onRemove, onClear, onCl
                     e.stopPropagation()
                     onRemove(entry.url)
                   }}
-                  className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-danger hover:bg-danger/10 transition-all opacity-0 group-hover:opacity-100 focus:opacity-100"
+                  className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-danger hover:bg-danger/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-100"
                   title="Remove from favorites"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
