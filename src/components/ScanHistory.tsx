@@ -25,7 +25,7 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onTo
   if (history.length === 0) return null
 
   return (
-    <Card className="w-full max-w-2xl mx-auto mt-4 overflow-hidden">
+    <Card id="scan-history" className="w-full max-w-2xl mx-auto mt-4 overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">

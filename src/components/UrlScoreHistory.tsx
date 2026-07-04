@@ -83,8 +83,8 @@ export default function UrlScoreHistory({ url, history }: UrlScoreHistoryProps) 
         <svg
           viewBox={`0 0 ${W} ${H}`}
           className="w-full"
-          style={{ height: '120px' }}
-          preserveAspectRatio="none"
+          style={{ height: 'auto', maxHeight: '160px' }}
+          preserveAspectRatio="xMidYMid meet"
         >
           {/* Grid lines */}
           {[0, 25, 50, 75, 100].map((v) => {

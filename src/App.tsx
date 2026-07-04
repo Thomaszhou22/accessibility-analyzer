@@ -246,7 +246,14 @@ export default function App() {
             {history.length > 0 && (
               <div className="flex justify-center mt-3 gap-4">
                 <button
-                  onClick={() => setShowHistory(!showHistory)}
+                  onClick={() => {
+                    setShowHistory(!showHistory)
+                    if (!showHistory) {
+                      setTimeout(() => {
+                        document.getElementById('scan-history')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                      }, 100)
+                    }
+                  }}
                   className="text-xs text-muted hover:text-foreground transition-colors flex items-center gap-1"
                 >
                   <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -256,7 +263,14 @@ export default function App() {
                 </button>
                 {favorites.length > 0 && (
                   <button
-                    onClick={() => setShowFavorites(!showFavorites)}
+                    onClick={() => {
+                      setShowFavorites(!showFavorites)
+                      if (!showFavorites) {
+                        setTimeout(() => {
+                          document.getElementById('favorites-panel')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                        }, 100)
+                      }
+                    }}
                     className="text-xs text-muted hover:text-warning transition-colors flex items-center gap-1"
                   >
                     <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -265,6 +279,22 @@ export default function App() {
                     Favorites ({favorites.length})
                   </button>
                 )}
+              </div>
+            )}
+            {showFavorites && (
+              <div id="favorites-panel">
+              <Favorites
+                favorites={favorites}
+                onSelect={(url) => {
+                  setShowFavorites(false)
+                  handleHistorySelect(url)
+                }}
+                onRemove={(url) => {
+                  const updated = removeFromFavorites(url)
+                  setFavorites(updated)
+                }}
+                onClose={() => setShowFavorites(false)}
+              />
               </div>
             )}
             {showHistory && (
@@ -281,20 +311,6 @@ export default function App() {
                   setFavorites(updated)
                 }}
                 isFavorited={isFavorited}
-              />
-            )}
-            {showFavorites && (
-              <Favorites
-                favorites={favorites}
-                onSelect={(url) => {
-                  setShowFavorites(false)
-                  handleHistorySelect(url)
-                }}
-                onRemove={(url) => {
-                  const updated = removeFromFavorites(url)
-                  setFavorites(updated)
-                }}
-                onClose={() => setShowFavorites(false)}
               />
             )}
             {/* Scan Activity Heatmap - always visible when there's history */}
