@@ -60,23 +60,13 @@ const HIGHLIGHT_SCRIPT = `
       var scrollY = window.scrollY || window.pageYOffset;
       var scrollX = window.scrollX || window.pageXOffset;
 
-      var backdrop = document.createElement('div');
-      backdrop.className = 'a11y-hl-backdrop';
-      var pageWidth = Math.max(document.documentElement.scrollWidth, document.documentElement.offsetWidth, window.innerWidth);
-      var pageHeight = Math.max(document.documentElement.scrollHeight, document.documentElement.offsetHeight, window.innerHeight);
-      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: ' + pageWidth + 'px; height: ' + pageHeight + 'px; background: rgba(0,0,0,0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';;
-      document.body.appendChild(backdrop);
+      var padding = 4;
 
+      // Single overlay with red border + box-shadow spreads outward to dim everything
       var overlay = document.createElement('div');
       overlay.className = 'a11y-hl-overlay';
-      var padding = 4;
-      overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239,68,68,0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; animation: a11y-pulse 1.5s ease-in-out infinite;';
+      overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239,68,68,0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; box-shadow: 0 0 0 9999px rgba(0,0,0,0.45);';
       document.body.appendChild(overlay);
-
-      var cutout = document.createElement('div');
-      cutout.className = 'a11y-hl-overlay';
-      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; background: rgba(0,0,0,0); border-radius: 4px;';
-      document.body.appendChild(cutout);
 
       var label = document.createElement('div');
       label.className = 'a11y-hl-label';
