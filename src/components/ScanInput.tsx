@@ -3,10 +3,12 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Card, CardContent } from '@/components/ui/Card'
 import BatchScan from '@/components/BatchScan'
+import type { ScanResult } from '@/engine/types'
 
 interface UrlInputProps {
   onScan: (url: string) => void
   onScanHtml: (html: string, sourceUrl?: string) => void
+  onBatchScanComplete?: (result: ScanResult) => void
   loading: boolean
 }
 
@@ -19,7 +21,7 @@ function normaliseUrl(url: string): string {
   return trimmed
 }
 
-export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps) {
+export default function ScanInput({ onScan, onScanHtml, onBatchScanComplete, loading }: UrlInputProps) {
   const [url, setUrl] = useState('')
   const [showHtmlMode, setShowHtmlMode] = useState(false)
   const [html, setHtml] = useState('')
@@ -68,7 +70,7 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
             Batch Scan
           </button>
         </div>
-        <BatchScan />
+        <BatchScan onScanComplete={onBatchScanComplete} />
       </div>
     )
   }

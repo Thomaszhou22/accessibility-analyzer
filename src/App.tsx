@@ -255,7 +255,16 @@ export default function App() {
 
         {!result && (
           <>
-            <ScanInput onScan={handleScanUrl} onScanHtml={handleScanHtml} loading={loading} />
+            <ScanInput 
+              onScan={handleScanUrl} 
+              onScanHtml={handleScanHtml} 
+              onBatchScanComplete={(res) => {
+                setHistory(addToHistory(res))
+                setActivity(addActivity(res))
+                setScoreLog(addScoreLog(res))
+              }}
+              loading={loading} 
+            />
             <div className="flex justify-center mt-3 gap-4">
               <button
                 onClick={() => {

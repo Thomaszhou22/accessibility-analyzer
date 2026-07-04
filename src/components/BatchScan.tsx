@@ -6,7 +6,7 @@ import { scanUrl } from '@/engine/scanner'
 import { fetchSitemap } from '@/lib/sitemap'
 
 interface BatchScanProps {
-  onResultsReady?: (results: ScanResult[]) => void
+  onScanComplete?: (result: ScanResult) => void
 }
 
 interface BatchScanState {
@@ -19,8 +19,9 @@ interface BatchScanState {
   error: string | null
 }
 
-export default function BatchScan({ onResultsReady }: BatchScanProps) {
+export default function BatchScan({ onScanComplete }: BatchScanProps) {
   const [domain, setDomain] = useState('')
+  const [previewResult, setPreviewResult] = useState<ScanResult | null>(null)
   const [state, setState] = useState<BatchScanState>({
     status: 'idle',
     urls: [],
@@ -45,7 +46,6 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
     })
 
     try {
-      // Fetch sitemap
       const urls = await fetchSitemap(domain)
 
       if (urls.length === 0) {
@@ -64,7 +64,6 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
         total: urls.length,
       }))
 
-      // Scan each URL
       const results: ScanResult[] = []
 
       for (let i = 0; i < urls.length; i++) {
@@ -79,10 +78,10 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
         try {
           const result = await scanUrl(url)
           results.push(result)
+          if (onScanComplete) onScanComplete(result)
         } catch (err) {
           console.error(`[BatchScan] Failed to scan ${url}:`, err)
-          // Create a failed result entry
-          results.push({
+          const failedResult: ScanResult = {
             url,
             score: 0,
             totalIssues: 0,
@@ -93,7 +92,9 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
             scannedAt: new Date().toISOString(),
             durationMs: 0,
             html: undefined,
-          })
+          }
+          results.push(failedResult)
+          if (onScanComplete) onScanComplete(failedResult)
         }
       }
 
@@ -104,10 +105,6 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
         progress: urls.length,
         currentUrl: null,
       }))
-
-      if (onResultsReady) {
-        onResultsReady(results)
-      }
     } catch (err) {
       setState((prev) => ({
         ...prev,
@@ -130,8 +127,48 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
     })
   }
 
-  // Sort results by score ascending (worst first)
   const sortedResults = [...state.results].sort((a, b) => a.score - b.score)
+
+  // Preview mode
+  if (previewResult) {
+    return (
+      <Card className="w-full max-w-4xl mx-auto">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between mb-3">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-sm font-semibold text-foreground truncate">{previewResult.url}</h3>
+              <p className="text-xs text-muted mt-0.5">
+                Score: {previewResult.score} · {previewResult.errors} errors · {previewResult.warnings} warnings
+              </p>
+            </div>
+            <Button onClick={() => setPreviewResult(null)} variant="outline" size="sm">
+              <span className="flex items-center gap-1.5">
+                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                </svg>
+                Back to Results
+              </span>
+            </Button>
+          </div>
+          {previewResult.html ? (
+            <div className="rounded-lg overflow-hidden border border-border">
+              <iframe
+                srcDoc={previewResult.html}
+                className="w-full"
+                style={{ height: '70vh' }}
+                sandbox="allow-same-origin allow-scripts"
+                title="Preview"
+              />
+            </div>
+          ) : (
+            <div className="flex items-center justify-center py-12 text-sm text-muted">
+              No preview available for this page
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    )
+  }
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -182,19 +219,8 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
           <div className="flex items-center justify-center py-8">
             <div className="flex items-center gap-3 text-muted text-sm">
               <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-                <circle
-                  className="opacity-25"
-                  cx="12"
-                  cy="12"
-                  r="10"
-                  stroke="currentColor"
-                  strokeWidth="4"
-                />
-                <path
-                  className="opacity-75"
-                  fill="currentColor"
-                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
-                />
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
               </svg>
               Fetching sitemap...
             </div>
@@ -210,7 +236,6 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
               </p>
             </div>
 
-            {/* Progress bar */}
             <div className="space-y-2">
               <div className="h-2 bg-surface rounded-full overflow-hidden">
                 <div
@@ -258,7 +283,6 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
               </Button>
             </div>
 
-            {/* Results table */}
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
@@ -268,6 +292,7 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
                     <th className="text-center py-2 px-3 text-muted font-medium">Errors</th>
                     <th className="text-center py-2 px-3 text-muted font-medium">Warnings</th>
                     <th className="text-center py-2 px-3 text-muted font-medium">Issues</th>
+                    <th className="text-center py-2 px-3 text-muted font-medium">Preview</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -278,7 +303,7 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
                           href={result.url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="text-primary hover:underline font-mono text-xs truncate block max-w-[300px]"
+                          className="text-primary hover:underline font-mono text-xs truncate block max-w-[260px]"
                           title={result.url}
                         >
                           {result.url}
@@ -308,13 +333,21 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
                       <td className="py-2 px-3 text-center text-muted">
                         {result.totalIssues}
                       </td>
+                      <td className="py-2 px-3 text-center">
+                        <button
+                          onClick={() => setPreviewResult(result)}
+                          disabled={!result.html}
+                          className="text-xs text-primary hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
+                        >
+                          {result.html ? 'View' : 'N/A'}
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
             </div>
 
-            {/* Summary stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-border">
               <div className="text-center">
                 <div className="text-2xl font-bold text-foreground">
