@@ -12,7 +12,7 @@ export interface HistoryEntry {
 
 const STORAGE_KEY = 'a11y-history'
 const LAST_RESULT_KEY = 'a11y-last-result'
-const MAX_ENTRIES = 10
+const MAX_ENTRIES = 50
 
 export function getHistory(): HistoryEntry[] {
   try {
@@ -29,9 +29,6 @@ export function getHistory(): HistoryEntry[] {
 export function addToHistory(result: ScanResult): HistoryEntry[] {
   const history = getHistory()
 
-  // Remove duplicate entries for the same URL
-  const filtered = history.filter((h) => h.url !== result.url)
-
   const entry: HistoryEntry = {
     url: result.url,
     score: result.score,
@@ -42,7 +39,7 @@ export function addToHistory(result: ScanResult): HistoryEntry[] {
     scannedAt: result.scannedAt,
   }
 
-  const updated = [entry, ...filtered].slice(0, MAX_ENTRIES)
+  const updated = [entry, ...history].slice(0, MAX_ENTRIES)
 
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(updated))
@@ -59,6 +56,11 @@ export function clearHistory(): void {
   } catch {
     // ignore
   }
+}
+
+export function getUrlHistory(url: string): HistoryEntry[] {
+  const history = getHistory()
+  return history.filter((h) => h.url === url).reverse()
 }
 
 export function removeFromHistory(url: string): HistoryEntry[] {
@@ -96,6 +98,48 @@ export function clearLastResult(): void {
   } catch {
     // ignore
   }
+}
+
+const FAVORITES_KEY = 'a11y-favorites'
+
+export function getFavorites(): HistoryEntry[] {
+  try {
+    const raw = localStorage.getItem(FAVORITES_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+  } catch {
+    return []
+  }
+}
+
+export function addToFavorites(entry: HistoryEntry): HistoryEntry[] {
+  const favorites = getFavorites()
+  const filtered = favorites.filter((f) => f.url !== entry.url)
+  const updated = [entry, ...filtered]
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated))
+  } catch {
+    // ignore
+  }
+  return updated
+}
+
+export function removeFromFavorites(url: string): HistoryEntry[] {
+  const favorites = getFavorites()
+  const updated = favorites.filter((f) => f.url !== url)
+  try {
+    localStorage.setItem(FAVORITES_KEY, JSON.stringify(updated))
+  } catch {
+    // ignore
+  }
+  return updated
+}
+
+export function isFavorited(url: string): boolean {
+  const favorites = getFavorites()
+  return favorites.some((f) => f.url === url)
 }
 
 export function formatRelativeTime(isoString: string): string {
