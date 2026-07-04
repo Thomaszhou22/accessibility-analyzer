@@ -9,9 +9,9 @@ export default function HeroModal({ open, onClose }: HeroModalProps) {
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - darker for readability */}
       <div
-        className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm"
+        className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md"
         onClick={onClose}
       />
       {/* Modal */}
