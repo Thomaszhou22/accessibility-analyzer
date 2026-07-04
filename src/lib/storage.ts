@@ -142,6 +142,107 @@ export function isFavorited(url: string): boolean {
   return favorites.some((f) => f.url === url)
 }
 
+const ACTIVITY_KEY = 'a11y-activity'
+const SCORE_LOG_KEY = 'a11y-score-log'
+const MAX_ACTIVITY = 500
+
+export interface ActivityEntry {
+  url: string
+  score: number
+  scannedAt: string
+}
+
+export function getActivity(): ActivityEntry[] {
+  try {
+    const raw = localStorage.getItem(ACTIVITY_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed.slice(0, MAX_ACTIVITY)
+  } catch {
+    return []
+  }
+}
+
+export function addActivity(result: ScanResult): ActivityEntry[] {
+  const activity = getActivity()
+  const entry: ActivityEntry = {
+    url: result.url,
+    score: result.score,
+    scannedAt: result.scannedAt,
+  }
+  const updated = [entry, ...activity].slice(0, MAX_ACTIVITY)
+  try {
+    localStorage.setItem(ACTIVITY_KEY, JSON.stringify(updated))
+  } catch {
+    // ignore
+  }
+  return updated
+}
+
+export function clearActivity(): void {
+  try {
+    localStorage.removeItem(ACTIVITY_KEY)
+  } catch {
+    // ignore
+  }
+}
+
+export interface ScoreLogEntry {
+  url: string
+  score: number
+  scannedAt: string
+}
+
+export function getScoreLog(): ScoreLogEntry[] {
+  try {
+    const raw = localStorage.getItem(SCORE_LOG_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+  } catch {
+    return []
+  }
+}
+
+export function addScoreLog(result: ScanResult): ScoreLogEntry[] {
+  const log = getScoreLog()
+  const entry: ScoreLogEntry = {
+    url: result.url,
+    score: result.score,
+    scannedAt: result.scannedAt,
+  }
+  const updated = [entry, ...log]
+  try {
+    localStorage.setItem(SCORE_LOG_KEY, JSON.stringify(updated))
+  } catch {
+    // ignore
+  }
+  return updated
+}
+
+export function getUrlScoreLog(url: string): ScoreLogEntry[] {
+  const log = getScoreLog()
+  return log.filter((e) => e.url === url).reverse()
+}
+
+export function clearScoreLog(): void {
+  try {
+    localStorage.removeItem(SCORE_LOG_KEY)
+  } catch {
+    // ignore
+  }
+}
+
+export function clearFavorites(): void {
+  try {
+    localStorage.removeItem(FAVORITES_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 export function formatRelativeTime(isoString: string): string {
   const now = Date.now()
   const then = new Date(isoString).getTime()

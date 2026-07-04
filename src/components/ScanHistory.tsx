@@ -7,6 +7,7 @@ interface ScanHistoryProps {
   onSelect: (url: string) => void
   onRemove: (url: string) => void
   onClear: () => void
+  onClose: () => void
   onToggleFavorite: (entry: HistoryEntry) => void
   isFavorited: (url: string) => boolean
 }
@@ -21,7 +22,7 @@ function UrlDisplay({ url }: { url: string }) {
   )
 }
 
-export default function ScanHistory({ history, onSelect, onRemove, onClear, onToggleFavorite, isFavorited }: ScanHistoryProps) {
+export default function ScanHistory({ history, onSelect, onRemove, onClear, onClose, onToggleFavorite, isFavorited }: ScanHistoryProps) {
   if (history.length === 0) return null
 
   return (
@@ -31,12 +32,20 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onTo
           <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
             Recent Scans
           </h3>
-          <button
-            onClick={onClear}
-            className="text-xs text-muted hover:text-danger transition-colors"
-          >
-            Clear all
-          </button>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={onClear}
+              className="text-xs text-muted hover:text-danger transition-colors"
+            >
+              Clear all
+            </button>
+            <button
+              onClick={onClose}
+              className="text-xs text-muted hover:text-foreground transition-colors"
+            >
+              Close
+            </button>
+          </div>
         </div>
         <div className="space-y-1">
           {history.map((entry, i) => (

@@ -1,9 +1,9 @@
 import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
-import type { HistoryEntry } from '@/lib/storage'
+import type { ActivityEntry } from '@/lib/storage'
 
 interface TrendChartProps {
-  history: HistoryEntry[]
+  activity: ActivityEntry[]
 }
 
 const DAYS = 90
@@ -28,10 +28,10 @@ function getDateStr(date: Date): string {
   return `${y}-${m}-${d}`
 }
 
-export default function TrendChart({ history }: TrendChartProps) {
+export default function TrendChart({ activity }: TrendChartProps) {
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
 
-  if (history.length === 0) {
+  if (activity.length === 0) {
     return (
       <Card className="w-full max-w-2xl mx-auto mt-4">
         <CardContent className="p-4 text-center">
@@ -45,12 +45,12 @@ export default function TrendChart({ history }: TrendChartProps) {
 
   // Count scans per day
   const scanCounts: Record<string, number> = {}
-  for (const entry of history) {
-    const day = entry.scannedAt.slice(0, 10) // YYYY-MM-DD
+  for (const entry of activity) {
+    const day = entry.scannedAt.slice(0, 10)
     scanCounts[day] = (scanCounts[day] || 0) + 1
   }
 
-  const totalScans = history.length
+  const totalScans = activity.length
 
   // Build the grid: today is the last cell (bottom-right)
   const today = new Date()

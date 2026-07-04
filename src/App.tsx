@@ -12,7 +12,7 @@ import { Button } from '@/components/ui/Button'
 import { useState, useEffect, useCallback } from 'react'
 import type { ScanResult } from '@/engine/types'
 import { scanUrl, scanHtml } from '@/engine/scanner'
-import { getHistory, addToHistory, clearHistory, removeFromHistory, getLastResult, saveLastResult, clearLastResult, getFavorites, addToFavorites, removeFromFavorites, isFavorited, type HistoryEntry } from '@/lib/storage'
+import { getHistory, addToHistory, clearHistory, removeFromHistory, getLastResult, saveLastResult, clearLastResult, getFavorites, addToFavorites, removeFromFavorites, clearFavorites, isFavorited, getActivity, addActivity, clearActivity, getScoreLog, addScoreLog, getUrlScoreLog, clearScoreLog, type HistoryEntry, type ActivityEntry, type ScoreLogEntry } from '@/lib/storage'
 import { getTheme, toggleTheme, type Theme } from '@/lib/theme'
 
 // URLs that should never appear in the preview (our own app)
@@ -29,6 +29,8 @@ export default function App() {
   const [showHistory, setShowHistory] = useState(false)
   const [showFavorites, setShowFavorites] = useState(false)
   const [favorites, setFavorites] = useState<HistoryEntry[]>([])
+  const [activity, setActivity] = useState<ActivityEntry[]>([])
+  const [scoreLog, setScoreLog] = useState<ScoreLogEntry[]>([])
   const [highlightSelector, setHighlightSelector] = useState<string | null>(null)
   const [highlightLabel, setHighlightLabel] = useState<string | null>(null)
   const [showPreview, setShowPreview] = useState(false)
@@ -41,6 +43,8 @@ export default function App() {
   useEffect(() => {
     setHistory(getHistory())
     setFavorites(getFavorites())
+    setActivity(getActivity())
+    setScoreLog(getScoreLog())
     const last = getLastResult()
     if (last) {
       setResult(last)
@@ -76,6 +80,8 @@ export default function App() {
       }
       const updated = addToHistory(res)
       setHistory(updated)
+      setActivity(addActivity(res))
+      setScoreLog(addScoreLog(res))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Scan failed. Try HTML Paste Mode.')
     } finally {
@@ -97,6 +103,8 @@ export default function App() {
       setShowPreview(!!res.html)
       const updated = addToHistory(res)
       setHistory(updated)
+      setActivity(addActivity(res))
+      setScoreLog(addScoreLog(res))
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Scan failed.')
     } finally {
@@ -128,6 +136,11 @@ export default function App() {
       setResult(null)
       clearLastResult()
     }
+  }
+
+  const handleClearFavorites = () => {
+    clearFavorites()
+    setFavorites([])
   }
 
   const handleHistorySelect = (url: string) => {
@@ -293,6 +306,7 @@ export default function App() {
                   const updated = removeFromFavorites(url)
                   setFavorites(updated)
                 }}
+                onClear={handleClearFavorites}
                 onClose={() => setShowFavorites(false)}
               />
               </div>
@@ -306,6 +320,7 @@ export default function App() {
                 }}
                 onRemove={handleRemoveHistory}
                 onClear={handleClearHistory}
+                onClose={() => setShowHistory(false)}
                 onToggleFavorite={(entry) => {
                   const updated = isFavorited(entry.url) ? removeFromFavorites(entry.url) : addToFavorites(entry)
                   setFavorites(updated)
@@ -313,9 +328,9 @@ export default function App() {
                 isFavorited={isFavorited}
               />
             )}
-            {/* Scan Activity Heatmap - always visible when there's history */}
-            {history.length > 0 && (
-              <TrendChart history={history} />
+            {/* Scan Activity Heatmap - always visible when there's activity */}
+            {activity.length > 0 && (
+              <TrendChart activity={activity} />
             )}
           </>
         )}
@@ -399,8 +414,8 @@ export default function App() {
             <ScorePanel result={result} />
 
             {/* Per-URL score history chart */}
-            {history.filter(h => h.url === result.url).length >= 2 && (
-              <UrlScoreHistory url={result.url} history={history} />
+            {scoreLog.filter(e => e.url === result.url).length >= 2 && (
+              <UrlScoreHistory url={result.url} scoreLog={scoreLog} />
             )}
 
             {/* Split view: preview + issues */}

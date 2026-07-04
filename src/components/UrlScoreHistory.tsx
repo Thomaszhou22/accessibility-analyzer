@@ -1,15 +1,14 @@
 import { Card, CardContent } from '@/components/ui/Card'
-import type { HistoryEntry } from '@/lib/storage'
+import type { ScoreLogEntry } from '@/lib/storage'
 
 interface UrlScoreHistoryProps {
   url: string
-  history: HistoryEntry[]
+  scoreLog: ScoreLogEntry[]
 }
 
-export default function UrlScoreHistory({ url, history }: UrlScoreHistoryProps) {
-  // Filter to only this URL's entries, sorted by time ascending
-  const entries = history
-    .filter((h) => h.url === url)
+export default function UrlScoreHistory({ url, scoreLog }: UrlScoreHistoryProps) {
+  const entries = scoreLog
+    .filter((e) => e.url === url)
     .sort((a, b) => new Date(a.scannedAt).getTime() - new Date(b.scannedAt).getTime())
 
   if (entries.length < 2) return null
