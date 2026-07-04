@@ -62,8 +62,9 @@ const HIGHLIGHT_SCRIPT = `
 
       var backdrop = document.createElement('div');
       backdrop.className = 'a11y-hl-backdrop';
+      var pageWidth = Math.max(document.documentElement.scrollWidth, document.documentElement.offsetWidth, window.innerWidth);
       var pageHeight = Math.max(document.documentElement.scrollHeight, document.documentElement.offsetHeight, window.innerHeight);
-      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: ' + pageHeight + 'px; background: rgba(0,0,0,0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: ' + pageWidth + 'px; height: ' + pageHeight + 'px; background: rgba(0,0,0,0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';;
       document.body.appendChild(backdrop);
 
       var overlay = document.createElement('div');
@@ -74,7 +75,7 @@ const HIGHLIGHT_SCRIPT = `
 
       var cutout = document.createElement('div');
       cutout.className = 'a11y-hl-overlay';
-      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); border-radius: 4px;';
+      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; background: rgba(0,0,0,0); border-radius: 4px;';
       document.body.appendChild(cutout);
 
       var label = document.createElement('div');
