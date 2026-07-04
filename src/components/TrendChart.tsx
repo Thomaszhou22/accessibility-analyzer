@@ -195,14 +195,15 @@ export default function TrendChart({ activity }: TrendChartProps) {
         <div className="flex items-center justify-end gap-1 mt-2">
           <span className="text-[9px] text-muted mr-1">Less</span>
           {[0, 1, 2, 4].map((count) => (
-            <rect
+            <div
               key={count}
-              width={10}
-              height={10}
-              rx={2}
-              fill={getColor(count)}
-              stroke="#2a2a3e"
-              strokeWidth={1}
+              style={{
+                width: 10,
+                height: 10,
+                borderRadius: 2,
+                backgroundColor: getColor(count),
+                border: '1px solid #2a2a3e',
+              }}
             />
           ))}
           <span className="text-[9px] text-muted ml-1">More</span>
