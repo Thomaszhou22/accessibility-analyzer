@@ -135,7 +135,7 @@ const imgAltRule: Rule = {
           )
         )
       } else if (img.getAttribute('alt')?.trim() === '') {
-        if (!img.getAttribute('role') === null && img.getAttribute('role') !== 'presentation') {
+        if (img.getAttribute('role') === null || img.getAttribute('role') !== 'presentation') {
           issues.push(
             createIssue(
               'img-alt',

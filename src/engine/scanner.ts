@@ -3,7 +3,7 @@ import { rules } from './rules'
 
 /**
  * Calculate an accessibility score based on issue counts.
- * Formula: 100 - errors*5 - warnings*2 - infos*1, clamped to [0, 100].
+ * Formula: 100 - min(errors*10,80) - min(warnings*4,30) - min(infos*1,10), clamped to [0, 100].
  */
 function calculateScore(
   errors: number,
