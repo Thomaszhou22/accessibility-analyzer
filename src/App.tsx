@@ -1,6 +1,7 @@
 import ScanInput from '@/components/ScanInput'
 import ScanHistory from '@/components/ScanHistory'
 import TrendChart from '@/components/TrendChart'
+import UrlScoreHistory from '@/components/UrlScoreHistory'
 import ScorePanel from '@/components/ScorePanel'
 import IssueList from '@/components/IssueList'
 import PreviewPanel from '@/components/PreviewPanel'
@@ -320,6 +321,11 @@ export default function App() {
             </div>
 
             <ScorePanel result={result} />
+
+            {/* Per-URL score history chart */}
+            {history.filter(h => h.url === result.url).length >= 2 && (
+              <UrlScoreHistory url={result.url} history={history} />
+            )}
 
             {/* Split view: preview + issues */}
             {showPreview && result.html ? (
