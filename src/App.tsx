@@ -309,32 +309,32 @@ export default function App() {
 function ScanResultUrl({ url, durationMs, fetchStrategy }: { url: string; durationMs: number; fetchStrategy?: string }) {
   const [expanded, setExpanded] = useState(false)
   const displayUrl = url || 'Pasted HTML'
-  const needsTruncate = displayUrl.length > 70
+  const needsTruncate = displayUrl.length > 50
 
   return (
-    <p className="text-xs text-muted">
+    <div className="text-xs text-muted min-w-0 overflow-hidden">
       {needsTruncate && !expanded ? (
-        <span className="flex items-center gap-1 flex-wrap">
-          <span className="truncate inline-block max-w-[300px] sm:max-w-md align-bottom">{displayUrl}</span>
+        <div className="flex items-center gap-1 flex-nowrap">
+          <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block min-w-0 max-w-[280px] sm:max-w-[400px]">{displayUrl}</span>
           <button
             type="button"
             onClick={() => setExpanded(true)}
-            className="text-accent hover:text-primary"
+            className="shrink-0 text-accent hover:text-primary whitespace-nowrap"
           >
             Show full
           </button>
-        </span>
+        </div>
       ) : needsTruncate && expanded ? (
-        <span className="flex items-start gap-1 flex-wrap">
-          <span className="break-all">{displayUrl}</span>
+        <div className="flex items-start gap-1 flex-wrap">
+          <span className="break-all whitespace-normal">{displayUrl}</span>
           <button
             type="button"
             onClick={() => setExpanded(false)}
-            className="text-accent hover:text-primary"
+            className="shrink-0 text-accent hover:text-primary whitespace-nowrap"
           >
             Show less
           </button>
-        </span>
+        </div>
       ) : (
         <span>{displayUrl}</span>
       )}
@@ -347,6 +347,6 @@ function ScanResultUrl({ url, durationMs, fetchStrategy }: { url: string; durati
           </span>
         </>
       )}
-    </p>
+    </div>
   )
 }

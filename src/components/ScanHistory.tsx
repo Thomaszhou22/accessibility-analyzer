@@ -12,33 +12,33 @@ interface ScanHistoryProps {
 
 function UrlDisplay({ url }: { url: string }) {
   const [expanded, setExpanded] = useState(false)
-  const needsTruncate = url.length > 60
+  const needsTruncate = url.length > 40
   return (
-    <div className="text-sm text-white group-hover:text-primary transition-colors">
+    <div className="text-sm text-white group-hover:text-primary transition-colors min-w-0 overflow-hidden">
       {needsTruncate && !expanded ? (
-        <span className="flex items-center gap-1">
-          <span className="truncate">{url}</span>
+        <div className="flex items-center gap-1 min-w-0">
+          <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block min-w-0">{url}</span>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setExpanded(true) }}
-            className="shrink-0 text-xs text-accent hover:text-primary"
+            className="shrink-0 text-xs text-accent hover:text-primary whitespace-nowrap"
           >
             Show full
           </button>
-        </span>
+        </div>
       ) : needsTruncate && expanded ? (
-        <span className="flex items-start gap-1">
-          <span className="break-all">{url}</span>
+        <div className="flex items-start gap-1">
+          <span className="break-all whitespace-normal">{url}</span>
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setExpanded(false) }}
-            className="shrink-0 text-xs text-accent hover:text-primary mt-0.5"
+            className="shrink-0 text-xs text-accent hover:text-primary mt-0.5 whitespace-nowrap"
           >
             Show less
           </button>
-        </span>
+        </div>
       ) : (
-        <span>{url}</span>
+        <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block">{url}</span>
       )}
     </div>
   )
@@ -48,7 +48,7 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear }: Sc
   if (history.length === 0) return null
 
   return (
-    <Card className="w-full max-w-2xl mx-auto mt-4">
+    <Card className="w-full max-w-2xl mx-auto mt-4 overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
@@ -69,7 +69,7 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear }: Sc
             >
               <button
                 onClick={() => onSelect(entry.url)}
-                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-surface transition-colors text-left"
+                className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-surface transition-colors text-left min-w-0 overflow-hidden"
               >
                 <div className="flex items-center gap-3 min-w-0 flex-1">
                   <div className={`w-8 h-8 rounded-lg flex items-center justify-center text-xs font-bold shrink-0 ${
