@@ -12,7 +12,7 @@ interface FavoritesProps {
 
 export default function Favorites({ favorites, onSelect, onRemove, onClear, onClose }: FavoritesProps) {
   return (
-    <Card className="w-full max-w-2xl mx-auto mt-4 overflow-hidden">
+    <Card id="favorites-panel" className="w-full max-w-2xl mx-auto mt-4 overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-center justify-between mb-3">
           <h3 className="text-xs font-semibold text-muted uppercase tracking-wider">
@@ -20,32 +20,21 @@ export default function Favorites({ favorites, onSelect, onRemove, onClear, onCl
           </h3>
           <div className="flex items-center gap-3">
             {favorites.length > 0 && (
-              <button
-                onClick={onClear}
-                className="text-xs text-muted hover:text-danger transition-colors"
-              >
+              <button onClick={onClear} className="text-xs text-muted hover:text-danger transition-colors">
                 Clear all
               </button>
             )}
-            <button
-              onClick={onClose}
-              className="text-xs text-muted hover:text-foreground transition-colors"
-            >
+            <button onClick={onClose} className="text-xs text-muted hover:text-foreground transition-colors">
               Close
             </button>
           </div>
         </div>
         {favorites.length === 0 ? (
-          <p className="text-sm text-muted text-center py-4">
-            No favorites yet. Star scans to save them here.
-          </p>
+          <p className="text-sm text-muted text-center py-4">No favorites yet. Star scans to save them here.</p>
         ) : (
           <div className="space-y-1">
             {favorites.map((entry, i) => (
-              <div
-                key={`${entry.url}-${i}`}
-                className="flex items-center gap-1 group"
-              >
+              <div key={`${entry.url}-${i}`} className="flex items-center gap-1 group">
                 <button
                   onClick={() => onSelect(entry.url)}
                   className="flex-1 flex items-center justify-between gap-3 px-3 py-2 rounded-lg hover:bg-surface transition-colors text-left min-w-0 overflow-hidden bg-warning/5"
@@ -71,23 +60,23 @@ export default function Favorites({ favorites, onSelect, onRemove, onClear, onCl
                       </div>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 shrink-0 min-w-[60px] justify-end">
+                  <div className="flex items-center gap-1.5 shrink-0 w-[60px] justify-end">
                     {entry.errors > 0 && <Badge variant="error">{entry.errors}E</Badge>}
                     {entry.warnings > 0 && <Badge variant="warning">{entry.warnings}W</Badge>}
                   </div>
                 </button>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    onRemove(entry.url)
-                  }}
-                  className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-danger hover:bg-danger/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-100"
-                  title="Remove from favorites"
-                >
-                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+                {/* Action buttons: fixed width to align with Recent Scans */}
+                <div className="flex items-center justify-end gap-1 shrink-0 w-[60px]">
+                  <button
+                    onClick={(e) => { e.stopPropagation(); onRemove(entry.url) }}
+                    className="w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-danger hover:bg-danger/10 opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity duration-100"
+                    title="Remove from favorites"
+                  >
+                    <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
               </div>
             ))}
           </div>
