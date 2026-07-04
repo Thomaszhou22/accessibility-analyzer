@@ -5,7 +5,7 @@ import { Card, CardContent } from '@/components/ui/Card'
 
 interface UrlInputProps {
   onScan: (url: string) => void
-  onScanHtml: (html: string) => void
+  onScanHtml: (html: string, sourceUrl?: string) => void
   loading: boolean
 }
 
@@ -22,11 +22,15 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
   const [url, setUrl] = useState('')
   const [showHtmlMode, setShowHtmlMode] = useState(false)
   const [html, setHtml] = useState('')
+  const [sourceUrl, setSourceUrl] = useState('')
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (showHtmlMode) {
-      if (html.trim()) onScanHtml(html)
+      if (html.trim()) {
+        const trimmedUrl = sourceUrl.trim()
+        onScanHtml(html, trimmedUrl ? normaliseUrl(trimmedUrl) : undefined)
+      }
     } else {
       if (url.trim()) {
         const normalised = normaliseUrl(url)
@@ -103,6 +107,19 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
                 disabled={loading}
                 className="min-h-[200px] font-mono text-xs"
               />
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  placeholder="Source URL (optional, for loading CSS/images in preview)"
+                  value={sourceUrl}
+                  onChange={(e) => setSourceUrl(e.target.value)}
+                  disabled={loading}
+                  autoCapitalize="off"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  className="flex-1 h-9 rounded-lg border border-border bg-background px-3 py-1.5 text-xs text-white placeholder:text-muted transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
+                />
+              </div>
               <Button type="submit" disabled={loading || !html.trim()} className="w-full">
                 {loading ? 'Scanning...' : 'Scan HTML'}
               </Button>

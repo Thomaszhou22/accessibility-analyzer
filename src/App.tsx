@@ -62,11 +62,15 @@ export default function App() {
     }
   }, [])
 
-  const handleScanHtml = useCallback((html: string) => {
+  const handleScanHtml = useCallback((html: string, sourceUrl?: string) => {
     setLoading(true)
     setError(null)
     try {
-      const res = scanHtml(html)
+      const res = scanHtml(html, sourceUrl)
+      // If user provided a source URL, use it for preview base URL
+      if (sourceUrl) {
+        res.url = sourceUrl
+      }
       setResult(res)
       saveLastResult(res)
       setShowPreview(!!res.html)
