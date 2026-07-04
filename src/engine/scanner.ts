@@ -237,6 +237,27 @@ function looksLikeHtml(text: string): boolean {
   )
 }
 
+/** Detect if the response is actually our own SPA page (proxy fallback to index.html) */
+function isSpaFallbackPage(html: string, targetUrl: string): boolean {
+  const lower = html.toLowerCase()
+  // SPA pages have <div id="root"> or <div id="app"> with module scripts
+  const hasRootDiv = lower.includes('id="root"') || lower.includes("id='root'") || lower.includes('id="app"')
+  const hasModuleScript = lower.includes('type="module"') || lower.includes("type='module'")
+  if (hasRootDiv && hasModuleScript) {
+    // Check if the target URL's domain appears anywhere in the HTML
+    try {
+      const domain = new URL(targetUrl).hostname
+      if (!lower.includes(domain.toLowerCase())) {
+        return true
+      }
+    } catch {
+      // If URL parsing fails, just check if it's suspiciously short
+      if (html.length < 2000) return true
+    }
+  }
+  return false
+}
+
 /**
  * Attempt to fetch HTML via multiple strategies.
  * Returns the HTML string and the strategy name that worked.
@@ -268,6 +289,11 @@ async function fetchHtmlMultiStrategy(
 
       if (!looksLikeHtml(text)) {
         errors.push(`${strategy.name}: response is not HTML`)
+        continue
+      }
+
+      if (isSpaFallbackPage(text, url)) {
+        errors.push(`${strategy.name}: received SPA fallback page instead of target`)
         continue
       }
 
