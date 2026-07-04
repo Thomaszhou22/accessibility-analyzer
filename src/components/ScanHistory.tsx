@@ -1,4 +1,3 @@
-import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { formatRelativeTime, type HistoryEntry } from '@/lib/storage'
@@ -11,35 +10,11 @@ interface ScanHistoryProps {
 }
 
 function UrlDisplay({ url }: { url: string }) {
-  const [expanded, setExpanded] = useState(false)
-  const needsTruncate = url.length > 40
   return (
-    <div className="text-sm text-white group-hover:text-primary transition-colors min-w-0 overflow-hidden">
-      {needsTruncate && !expanded ? (
-        <div className="flex items-center gap-1 min-w-0">
-          <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block min-w-0">{url}</span>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setExpanded(true) }}
-            className="shrink-0 text-xs text-accent hover:text-primary whitespace-nowrap"
-          >
-            Show full
-          </button>
-        </div>
-      ) : needsTruncate && expanded ? (
-        <div className="flex items-start gap-1">
-          <span className="break-all whitespace-normal">{url}</span>
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setExpanded(false) }}
-            className="shrink-0 text-xs text-accent hover:text-primary mt-0.5 whitespace-nowrap"
-          >
-            Show less
-          </button>
-        </div>
-      ) : (
-        <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block">{url}</span>
-      )}
+    <div className="text-sm text-white group-hover:text-primary transition-colors min-w-0">
+      <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block" title={url}>
+        {url}
+      </span>
     </div>
   )
 }
