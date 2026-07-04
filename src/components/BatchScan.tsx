@@ -155,6 +155,12 @@ export default function BatchScan({ onResultsReady }: BatchScanProps) {
                 autoCapitalize="off"
                 autoCorrect="off"
                 spellCheck={false}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && domain.trim() && state.status === 'idle') {
+                    e.preventDefault()
+                    handleStartBatchScan()
+                  }
+                }}
                 className="flex-1 h-11 rounded-lg border border-border bg-background px-4 py-2 text-sm text-foreground placeholder:text-muted transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
               />
               <Button
