@@ -155,10 +155,28 @@ const HIGHLIGHT_SCRIPT = `
 
   // Send ready message - use MutationObserver to detect when DOM is fully loaded
   function sendReady() {
+    // Measure the true content width independent of iframe CSS sizing
+    // Use a temporary wrapper to get natural width
+    var body = document.body;
+    var html = document.documentElement;
+    var contentWidth = Math.max(
+      body ? body.scrollWidth : 0,
+      body ? body.offsetWidth : 0,
+      html.scrollWidth,
+      html.offsetWidth
+    );
+    // Also check for elements that extend beyond the body
+    var widest = 0;
+    var elements = document.querySelectorAll('body > *');
+    for (var i = 0; i < elements.length && i < 50; i++) {
+      widest = Math.max(widest, elements[i].scrollWidth || 0, elements[i].offsetWidth || 0);
+    }
+    contentWidth = Math.max(contentWidth, widest);
+    
     window.parent.postMessage({
       type: 'a11y-preview-ready',
-      width: document.documentElement.scrollWidth,
-      height: document.documentElement.scrollHeight
+      width: contentWidth || html.scrollWidth,
+      height: Math.max(html.scrollHeight, body ? body.scrollHeight : 0)
     }, '*');
   }
 
@@ -220,12 +238,18 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
     return () => window.removeEventListener('message', handler)
   }, [])
 
-  // Auto-calculate initial zoom to fit the page whenever iframe reports new dimensions
+  // Auto-calculate initial zoom to fit the page
   const autoFitZoom = useCallback(() => {
     if (iframeDimensions.width > 0 && containerRef.current) {
       const containerWidth = containerRef.current.offsetWidth
-      const calculatedZoom = Math.min(100, Math.floor((containerWidth / iframeDimensions.width) * 100))
-      setZoom(Math.max(50, calculatedZoom))
+      const targetWidth = Math.max(iframeDimensions.width, 320)
+      const calculatedZoom = Math.min(100, Math.floor((containerWidth / targetWidth) * 100))
+      setZoom(Math.max(25, calculatedZoom))
+    } else if (containerRef.current) {
+      // Fallback: use container width vs 1280px default
+      const containerWidth = containerRef.current.offsetWidth
+      const calculatedZoom = Math.min(100, Math.floor((containerWidth / 1280) * 100))
+      setZoom(Math.max(25, calculatedZoom))
     }
   }, [iframeDimensions.width])
 
@@ -326,7 +350,7 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
             <label className="text-xs text-muted">Zoom</label>
             <input
               type="range"
-              min={50}
+              min={25}
               max={150}
               value={zoom}
               onChange={(e) => setZoom(Number(e.target.value))}
@@ -347,13 +371,13 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
             ref={iframeRef}
             srcDoc={srcdoc}
             sandbox="allow-same-origin allow-scripts allow-forms"
-            className="w-full h-full border-0"
+            className="border-0"
             style={{
               minHeight: '400px',
+              width: '1280px',
+              height: `${10000 / zoom}%`,
               transform: `scale(${zoom / 100})`,
               transformOrigin: 'top left',
-              width: `${10000 / zoom}%`,
-              height: `${10000 / zoom}%`,
             }}
             title="Website preview"
           />
