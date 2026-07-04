@@ -42,41 +42,41 @@ export default function HeroModal({ open, onClose }: HeroModalProps) {
                 Make the web accessible for everyone
               </p>
               <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed">
-                全球 16 亿残障人士依赖无障碍的网页。然而，
-                <span className="text-white font-semibold">96% 的网站首页</span>
-                不符合 WCAG 标准。AccessScan 帮你快速发现并修复这些问题。
+                Over 1.6 billion people live with a disability. Yet
+                <span className="text-white font-semibold"> 96% of websites </span>
+                fail WCAG standards. AccessScan helps you find and fix these issues in seconds.
               </p>
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
-              <StatCard value="20" label="WCAG 规则" color="primary" />
-              <StatCard value="4.5:1" label="对比度检测" color="accent" />
-              <StatCard value="2.1" label="WCAG 标准" color="primary" />
-              <StatCard value="0" label="后端依赖" color="accent" />
+              <StatCard value="20" label="WCAG Rules" color="primary" />
+              <StatCard value="4.5:1" label="Contrast Check" color="accent" />
+              <StatCard value="2.1" label="WCAG Standard" color="primary" />
+              <StatCard value="0" label="Dependencies" color="accent" />
             </div>
 
             {/* Features */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-6">
               <FeatureCard
                 icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4" /></svg>}
-                title="WCAG 规则引擎"
-                description="20 条核心规则，覆盖图片替代文本、表单标签、对比度、语义化 HTML 等"
+                title="WCAG Rules"
+                description="20 rules covering alt text, form labels, contrast, semantic HTML and more"
               />
               <FeatureCard
                 icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>}
-                title="实时预览高亮"
-                description="扫描结果直接在页面上高亮显示问题元素，点击即可定位"
+                title="Live Preview Highlight"
+                description="Click any issue to highlight the exact element in a live preview"
               />
               <FeatureCard
                 icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" /></svg>}
-                title="多代理抓取"
-                description="7 层抓取策略，自动尝试不同代理获取页面内容"
+                title="Multi-Agent Fetching"
+                description="7-layer fetch strategy with automatic proxy fallbacks for reliable crawling"
               />
               <FeatureCard
                 icon={<svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>}
-                title="PDF 报告导出"
-                description="一键生成可打印报告，包含问题详情和修复建议"
+                title="PDF Report Export"
+                description="One-click printable reports with issue details and fix recommendations"
               />
             </div>
 
