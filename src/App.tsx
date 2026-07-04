@@ -10,6 +10,12 @@ import type { ScanResult } from '@/engine/types'
 import { scanUrl, scanHtml } from '@/engine/scanner'
 import { getHistory, addToHistory, clearHistory, removeFromHistory, getLastResult, saveLastResult, clearLastResult, type HistoryEntry } from '@/lib/storage'
 
+// URLs that should never appear in the preview (our own app)
+const SELF_URLS = [
+  location.origin,
+  location.href,
+].filter(Boolean)
+
 export default function App() {
   const [result, setResult] = useState<ScanResult | null>(null)
   const [loading, setLoading] = useState(false)
@@ -119,6 +125,10 @@ export default function App() {
   }, [])
 
   const handleNavigate = useCallback((url: string) => {
+    // Prevent navigating to self
+    if (SELF_URLS.some(u => url === u || url.startsWith(u + '/'))) {
+      return
+    }
     const alreadyScanned = pageResults.get(url)
     if (alreadyScanned) {
       setResult(alreadyScanned)
@@ -225,38 +235,27 @@ export default function App() {
           <div className="space-y-4">
             {/* Result header */}
             <div className="flex items-center justify-between">
-              <div>
+              <div className="min-w-0 flex-1">
                 <h2 className="text-lg font-semibold text-white">Scan Results</h2>
-                <p className="text-xs text-muted max-w-[300px] sm:max-w-md">
-                  <span className="truncate inline-block align-bottom">{result.url || 'Pasted HTML'}</span> · {result.durationMs}ms
-                  {result.fetchStrategy && (
-                    <>
-                      {' · '}
-                      <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono">
-                        {result.fetchStrategy}
-                      </span>
-                    </>
-                  )}
-                </p>
+                <ScanResultUrl url={result.url} durationMs={result.durationMs} fetchStrategy={result.fetchStrategy} />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 shrink-0 ml-4">
                 {result.html && (
                   <Button
                     variant="outline"
                     size="sm"
-                    onClick={() => setShowPreview(!showPreview)}
+                    onClick={() => {
+                      setShowPreview(!showPreview)
+                      if (showPreview) {
+                        setHighlightSelector(null)
+                        setHighlightLabel(null)
+                      }
+                    }}
                   >
-                    <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                    </svg>
                     {showPreview ? 'Hide Preview' : 'Show Preview'}
                   </Button>
                 )}
                 <Button variant="outline" size="sm" onClick={handleExportPdf}>
-                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
                   Export PDF
                 </Button>
                 <Button variant="outline" size="sm" onClick={handleReset}>
@@ -304,5 +303,50 @@ export default function App() {
         </div>
       </footer>
     </div>
+  )
+}
+
+function ScanResultUrl({ url, durationMs, fetchStrategy }: { url: string; durationMs: number; fetchStrategy?: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const displayUrl = url || 'Pasted HTML'
+  const needsTruncate = displayUrl.length > 70
+
+  return (
+    <p className="text-xs text-muted">
+      {needsTruncate && !expanded ? (
+        <span className="flex items-center gap-1 flex-wrap">
+          <span className="truncate inline-block max-w-[300px] sm:max-w-md align-bottom">{displayUrl}</span>
+          <button
+            type="button"
+            onClick={() => setExpanded(true)}
+            className="text-accent hover:text-primary"
+          >
+            Show full
+          </button>
+        </span>
+      ) : needsTruncate && expanded ? (
+        <span className="flex items-start gap-1 flex-wrap">
+          <span className="break-all">{displayUrl}</span>
+          <button
+            type="button"
+            onClick={() => setExpanded(false)}
+            className="text-accent hover:text-primary"
+          >
+            Show less
+          </button>
+        </span>
+      ) : (
+        <span>{displayUrl}</span>
+      )}
+      {' · '}{durationMs}ms
+      {fetchStrategy && (
+        <>
+          {' · '}
+          <span className="px-1.5 py-0.5 rounded bg-accent/15 text-accent text-[10px] font-mono">
+            {fetchStrategy}
+          </span>
+        </>
+      )}
+    </p>
   )
 }

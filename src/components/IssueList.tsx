@@ -10,7 +10,7 @@ interface IssueListProps {
 }
 
 export default function IssueList({ result, onIssueClick }: IssueListProps) {
-  const [filter, setFilter] = useState<'all' | 'error' | 'warning' | 'info'>('all')
+  const [filter, setFilter] = useState<'all' | 'error' | 'warning'>('all')
   const [expandedId, setExpandedId] = useState<string | null>(null)
   const [selectedKey, setSelectedKey] = useState<string | null>(null)
 
@@ -28,13 +28,12 @@ export default function IssueList({ result, onIssueClick }: IssueListProps) {
     onIssueClickRef.current?.('', null)
   }, [filter])
 
-  const filtered = filter === 'all' ? result.issues : result.issues.filter((i) => i.level === filter)
+  const filtered = filter === 'all' ? result.issues : result.issues.filter((i) => i.level === filter || (filter === 'warning' && i.level === 'info'))
 
   const filters = [
     { key: 'all' as const, label: 'All', count: result.issues.length },
     { key: 'error' as const, label: 'Errors', count: result.errors },
     { key: 'warning' as const, label: 'Warnings', count: result.warnings },
-    { key: 'info' as const, label: 'Info', count: result.infos },
   ]
 
   return (
@@ -223,7 +222,7 @@ function IssueRow({ issue, expanded, isSelected, onToggle, onLocate }: IssueRowP
       </div>
 
       {expanded && (
-        <div className="mt-3 space-y-3" onClick={(e) => e.stopPropagation()}>
+        <div className="mt-3 space-y-3">
           <p className="text-sm text-muted-foreground">{issue.description}</p>
 
           {issue.wcagCriteria.length > 0 && (
@@ -241,6 +240,7 @@ function IssueRow({ issue, expanded, isSelected, onToggle, onLocate }: IssueRowP
                     href={`https://www.w3.org/WAI/WCAG21/Understanding/${criteria.split(' ')[1] ? criteria.split(' ')[0] : criteria}`}
                     target="_blank"
                     rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
                     className="inline-flex items-center gap-1 rounded-md bg-primary/10 border border-primary/20 px-2 py-0.5 text-[11px] text-primary hover:bg-primary/20 transition-colors"
                   >
                     {criteria}
@@ -270,7 +270,7 @@ function IssueRow({ issue, expanded, isSelected, onToggle, onLocate }: IssueRowP
           )}
 
           {issue.fixCode && (
-            <div>
+            <div onClick={(e) => e.stopPropagation()}>
               <div className="flex items-center justify-between mb-1.5">
                 <div className="text-xs text-primary flex items-center gap-1">
                   <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">

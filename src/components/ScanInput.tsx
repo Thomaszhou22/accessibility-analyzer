@@ -64,20 +64,22 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
           {!showHtmlMode ? (
             <>
               <div className="flex gap-2">
-                <textarea
+                <input
+                  type="text"
                   placeholder="example.com or https://example.com"
                   value={url}
-                  onChange={(e) => {
-                    setUrl(e.target.value)
-                    e.target.style.height = 'auto'
-                    e.target.style.height = e.target.scrollHeight + 'px'
-                  }}
+                  onChange={(e) => setUrl(e.target.value)}
                   disabled={loading}
                   autoCapitalize="off"
                   autoCorrect="off"
                   spellCheck={false}
-                  rows={1}
-                  className="flex-1 min-h-[44px] max-h-[120px] rounded-lg border border-border bg-background px-4 py-2 text-sm text-white placeholder:text-muted transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50 resize-none overflow-y-auto"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      handleSubmit(e as unknown as React.FormEvent)
+                    }
+                  }}
+                  className="flex-1 h-11 rounded-lg border border-border bg-background px-4 py-2 text-sm text-white placeholder:text-muted transition-colors focus-visible:outline-none focus-visible:border-primary focus-visible:ring-2 focus-visible:ring-primary/20 disabled:cursor-not-allowed disabled:opacity-50"
                 />
                 <Button type="submit" disabled={loading || !url.trim()} className="shrink-0">
                   {loading ? 'Scanning...' : 'Scan'}

@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { formatRelativeTime, type HistoryEntry } from '@/lib/storage'
@@ -7,6 +8,40 @@ interface ScanHistoryProps {
   onSelect: (url: string) => void
   onRemove: (url: string) => void
   onClear: () => void
+}
+
+function UrlDisplay({ url }: { url: string }) {
+  const [expanded, setExpanded] = useState(false)
+  const needsTruncate = url.length > 60
+  return (
+    <div className="text-sm text-white group-hover:text-primary transition-colors">
+      {needsTruncate && !expanded ? (
+        <span className="flex items-center gap-1">
+          <span className="truncate">{url}</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded(true) }}
+            className="shrink-0 text-xs text-accent hover:text-primary"
+          >
+            Show full
+          </button>
+        </span>
+      ) : needsTruncate && expanded ? (
+        <span className="flex items-start gap-1">
+          <span className="break-all">{url}</span>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setExpanded(false) }}
+            className="shrink-0 text-xs text-accent hover:text-primary mt-0.5"
+          >
+            Show less
+          </button>
+        </span>
+      ) : (
+        <span>{url}</span>
+      )}
+    </div>
+  )
 }
 
 export default function ScanHistory({ history, onSelect, onRemove, onClear }: ScanHistoryProps) {
@@ -45,9 +80,7 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear }: Sc
                     {entry.score}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <div className="text-sm text-white truncate group-hover:text-primary transition-colors">
-                      {entry.url}
-                    </div>
+                    <UrlDisplay url={entry.url} />
                     <div className="text-xs text-muted flex items-center gap-2 mt-0.5">
                       <span>{formatRelativeTime(entry.scannedAt)}</span>
                       <span>&middot;</span>

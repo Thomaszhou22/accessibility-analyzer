@@ -27,21 +27,19 @@ export default function ScorePanel({ result }: ScorePanelProps) {
 
       {/* Stats Cards */}
       <Card className="md:col-span-3">
-        <CardContent className="p-6 grid grid-cols-3 gap-4">
+        <CardContent className="p-6 grid grid-cols-2 gap-4">
           <StatBlock label="Errors" value={result.errors} variant="error" />
           <StatBlock label="Warnings" value={result.warnings} variant="warning" />
-          <StatBlock label="Info" value={result.infos} variant="muted" />
         </CardContent>
       </Card>
     </div>
   )
 }
 
-function StatBlock({ label, value, variant }: { label: string; value: number; variant: 'error' | 'warning' | 'muted' }) {
+function StatBlock({ label, value, variant }: { label: string; value: number; variant: 'error' | 'warning' }) {
   const colors = {
     error: 'text-danger',
     warning: 'text-warning',
-    muted: 'text-muted',
   }
   return (
     <div className="text-center">

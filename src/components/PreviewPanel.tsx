@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useMemo } from 'react'
+import { useState, useRef, useEffect, useMemo, useCallback } from 'react'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { rewriteUrls } from '@/lib/rewriteUrls'
@@ -28,7 +28,8 @@ const HIGHLIGHT_SCRIPT = `
 </style>
 <script>
 (function() {
-  function clearHighlights() {
+  // Clean up any previous state
+  window.__a11yCleanup = function() {
     document.querySelectorAll('.a11y-hl-overlay, .a11y-hl-label, .a11y-hl-backdrop').forEach(function(el) { el.remove(); });
     document.querySelectorAll('*').forEach(function(el) {
       if (el.style.outline === '3px solid rgb(239, 68, 68)' || el.style.outline === '3px solid #ef4444') {
@@ -36,6 +37,10 @@ const HIGHLIGHT_SCRIPT = `
         el.style.outlineOffset = '';
       }
     });
+  };
+
+  function clearHighlights() {
+    window.__a11yCleanup();
   }
 
   function highlightElement(selector, labelText) {
@@ -48,56 +53,59 @@ const HIGHLIGHT_SCRIPT = `
     }
     if (!el) return;
 
-    // Scroll into view first, then calculate position
     el.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    
-    // Wait for scroll to complete before positioning
+
     setTimeout(function() {
       var rect = el.getBoundingClientRect();
       var scrollY = window.scrollY || window.pageYOffset;
       var scrollX = window.scrollX || window.pageXOffset;
 
-      // Dim the rest of the page - use viewport height for better coverage
       var backdrop = document.createElement('div');
       backdrop.className = 'a11y-hl-backdrop';
       var pageHeight = Math.max(document.documentElement.scrollHeight, document.documentElement.offsetHeight, window.innerHeight);
-      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: ' + pageHeight + 'px; background: rgba(0, 0, 0, 0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
+      backdrop.style.cssText = 'position: fixed; top: 0; left: 0; width: 100vw; height: ' + pageHeight + 'px; background: rgba(0,0,0,0.45); pointer-events: none; z-index: 2147483644; animation: a11y-backdrop-in 0.2s ease;';
       document.body.appendChild(backdrop);
 
-      // Main highlight box
       var overlay = document.createElement('div');
       overlay.className = 'a11y-hl-overlay';
       var padding = 4;
-      overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239, 68, 68, 0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; animation: a11y-pulse 1.5s ease-in-out infinite;';
+      overlay.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; border: 3px solid #ef4444; background: rgba(239,68,68,0.15); pointer-events: none; z-index: 2147483646; box-sizing: border-box; border-radius: 4px; animation: a11y-pulse 1.5s ease-in-out infinite;';
       document.body.appendChild(overlay);
 
-      // "Hole" in backdrop for the highlighted element (bring it above backdrop)
       var cutout = document.createElement('div');
       cutout.className = 'a11y-hl-overlay';
-      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45); border-radius: 4px;';
+      cutout.style.cssText = 'position: absolute; top: ' + (rect.top + scrollY - padding) + 'px; left: ' + (rect.left + scrollX - padding) + 'px; width: ' + (rect.width + padding * 2) + 'px; height: ' + (rect.height + padding * 2) + 'px; pointer-events: none; z-index: 2147483645; box-shadow: 0 0 0 9999px rgba(0,0,0,0.45); border-radius: 4px;';
       document.body.appendChild(cutout);
 
-      // Label with issue title
       var label = document.createElement('div');
       label.className = 'a11y-hl-label';
       var labelTop = rect.top + scrollY - padding - 32;
       if (labelTop < scrollY) labelTop = rect.top + scrollY + rect.height + padding + 4;
-      label.style.cssText = 'position: absolute; top: ' + labelTop + 'px; left: ' + (rect.left + scrollX - padding) + 'px; background: #ef4444; color: white; font-size: 13px; font-weight: 600; font-family: system-ui, -apple-system, sans-serif; padding: 4px 12px; border-radius: 6px; z-index: 2147483647; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.5); animation: a11y-slide-in 0.3s ease; max-width: 400px; overflow: hidden; text-overflow: ellipsis;';
+      label.style.cssText = 'position: absolute; top: ' + labelTop + 'px; left: ' + (rect.left + scrollX - padding) + 'px; background: #ef4444; color: white; font-size: 13px; font-weight: 600; font-family: system-ui, -apple-system, sans-serif; padding: 4px 12px; border-radius: 6px; z-index: 2147483647; pointer-events: none; white-space: nowrap; box-shadow: 0 4px 12px rgba(239,68,68,0.5); animation: a11y-slide-in 0.3s ease; max-width: 400px; overflow: hidden; text-overflow: ellipsis;';
       label.textContent = labelText || 'Accessibility Issue';
       document.body.appendChild(label);
 
       el.style.outline = '3px solid #ef4444';
       el.style.outlineOffset = '2px';
-      el.style.position = el.style.position || 'static';
       el.style.zIndex = '2147483645';
     }, 500);
   }
+
+  // Use a refresh mechanism so highlight can be re-applied after navigation
+  window.__a11yHighlight = highlightElement;
+  window.__a11yClear = clearHighlights;
 
   window.addEventListener('message', function(e) {
     if (e.data && e.data.type === 'a11y-highlight') {
       highlightElement(e.data.selector, e.data.label);
     } else if (e.data && e.data.type === 'a11y-clear') {
       clearHighlights();
+    } else if (e.data && e.data.type === 'a11y-refresh-highlight') {
+      if (e.data.selector) {
+        highlightElement(e.data.selector, e.data.label);
+      } else {
+        clearHighlights();
+      }
     }
   });
 
@@ -128,7 +136,7 @@ const HIGHLIGHT_SCRIPT = `
     var form = e.target;
     var action = form.action || window.location.href;
     var method = (form.method || 'GET').toUpperCase();
-    
+
     if (method === 'GET') {
       var formData = new FormData(form);
       var params = new URLSearchParams(formData);
@@ -139,17 +147,30 @@ const HIGHLIGHT_SCRIPT = `
           searchUrl.searchParams.set(key, value);
         });
         window.parent.postMessage({ type: 'a11y-navigate', url: searchUrl.href }, '*');
-      } catch(err) {
-        console.warn('[a11y] Failed to build search URL:', err);
-      }
+      } catch(err) {}
     } else {
-      // POST requests - just navigate to the action URL
       window.parent.postMessage({ type: 'a11y-navigate', url: action }, '*');
     }
   }, true);
 
-  // Send ready message early to avoid zoom delay
-  window.parent.postMessage({ type: 'a11y-preview-ready', width: document.documentElement.scrollWidth, height: document.documentElement.scrollHeight }, '*');
+  // Send ready message - use MutationObserver to detect when DOM is fully loaded
+  function sendReady() {
+    window.parent.postMessage({
+      type: 'a11y-preview-ready',
+      width: document.documentElement.scrollWidth,
+      height: document.documentElement.scrollHeight
+    }, '*');
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', sendReady);
+  } else {
+    sendReady();
+  }
+
+  // Re-send ready after a delay in case content loads asynchronously
+  setTimeout(sendReady, 300);
+  setTimeout(sendReady, 1000);
 })();
 </script>
 `
@@ -160,8 +181,8 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
   const [zoom, setZoom] = useState(100)
   const [device, setDevice] = useState<'desktop' | 'mobile'>('desktop')
   const [iframeReady, setIframeReady] = useState(false)
-  const [visible, setVisible] = useState(true)
   const [iframeDimensions, setIframeDimensions] = useState({ width: 0, height: 0 })
+  const pendingHighlightRef = useRef<{ selector: string | null; label: string | null | undefined }>({ selector: null, label: null })
 
   // Build srcdoc with URL rewriting and injected highlight script
   const srcdoc = useMemo(() => {
@@ -169,7 +190,6 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
     if (baseUrl) {
       content = rewriteUrls(content, baseUrl)
     }
-    // Inject highlight script before </body> or at end
     if (content.toLowerCase().includes('</body>')) {
       content = content.replace(/<\/body>/i, HIGHLIGHT_SCRIPT + '</body>')
     } else {
@@ -177,6 +197,10 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
     }
     return content
   }, [html, baseUrl])
+
+  // Stable navigation handler
+  const onNavigateRef = useRef(onNavigate)
+  onNavigateRef.current = onNavigate
 
   // Listen for iframe ready message and navigation
   useEffect(() => {
@@ -187,54 +211,74 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
           setIframeDimensions({ width: e.data.width, height: e.data.height })
         }
       } else if (e.data && e.data.type === 'a11y-navigate') {
-        if (onNavigate && e.data.url) {
-          onNavigate(e.data.url)
+        if (onNavigateRef.current && e.data.url) {
+          onNavigateRef.current(e.data.url)
         }
       }
     }
     window.addEventListener('message', handler)
     return () => window.removeEventListener('message', handler)
-  }, [onNavigate])
+  }, [])
+
+  // Auto-calculate initial zoom to fit the page whenever iframe reports new dimensions
+  const autoFitZoom = useCallback(() => {
+    if (iframeDimensions.width > 0 && containerRef.current) {
+      const containerWidth = containerRef.current.offsetWidth
+      const calculatedZoom = Math.min(100, Math.floor((containerWidth / iframeDimensions.width) * 100))
+      setZoom(Math.max(50, calculatedZoom))
+    }
+  }, [iframeDimensions.width])
+
+  useEffect(() => {
+    if (iframeReady) {
+      autoFitZoom()
+    }
+  }, [iframeReady, autoFitZoom])
 
   // Send highlight messages to iframe
   useEffect(() => {
-    if (!iframeRef.current || !iframeReady) return
+    if (!iframeRef.current || !iframeReady) {
+      // Store pending highlight for when iframe becomes ready
+      pendingHighlightRef.current = { selector: highlightSelector, label: highlightLabel }
+      return
+    }
     const iframe = iframeRef.current
     if (highlightSelector && highlightSelector.trim()) {
-      iframe.contentWindow?.postMessage({ type: 'a11y-highlight', selector: highlightSelector, label: highlightLabel || 'Accessibility Issue' }, '*')
+      iframe.contentWindow?.postMessage({
+        type: 'a11y-highlight',
+        selector: highlightSelector,
+        label: highlightLabel || 'Accessibility Issue'
+      }, '*')
     } else {
       iframe.contentWindow?.postMessage({ type: 'a11y-clear' }, '*')
     }
   }, [highlightSelector, highlightLabel, iframeReady])
 
-  // Reset iframe ready state when srcdoc changes
+  // Apply pending highlight once iframe becomes ready
+  useEffect(() => {
+    if (iframeReady && pendingHighlightRef.current.selector) {
+      const { selector, label } = pendingHighlightRef.current
+      pendingHighlightRef.current = { selector: null, label: null }
+      setTimeout(() => {
+        iframeRef.current?.contentWindow?.postMessage({
+          type: 'a11y-highlight',
+          selector,
+          label: label || 'Accessibility Issue'
+        }, '*')
+      }, 200)
+    }
+  }, [iframeReady])
+
+  // Reset iframe ready state when srcdoc changes (new navigation)
   useEffect(() => {
     setIframeReady(false)
+    // Keep the current highlight selector so it can be re-applied
+    if (highlightSelector) {
+      pendingHighlightRef.current = { selector: highlightSelector, label: highlightLabel }
+    }
   }, [srcdoc])
 
-  // Auto-calculate initial zoom to fit the page
-  useEffect(() => {
-    if (iframeReady && iframeDimensions.width > 0 && containerRef.current) {
-      const containerWidth = containerRef.current.offsetWidth
-      const calculatedZoom = Math.min(100, Math.floor((containerWidth / iframeDimensions.width) * 100))
-      setZoom(Math.max(50, calculatedZoom))
-    }
-  }, [iframeReady, iframeDimensions.width])
-
   const deviceWidth = device === 'desktop' ? '100%' : '375px'
-
-  if (!visible) {
-    return (
-      <Card className="border border-border">
-        <div className="flex items-center justify-between p-3">
-          <span className="text-sm text-muted">Preview Panel</span>
-          <Button variant="outline" size="sm" onClick={() => setVisible(true)}>
-            Show Preview
-          </Button>
-        </div>
-      </Card>
-    )
-  }
 
   return (
     <Card className="border border-border flex flex-col h-full">
@@ -269,6 +313,15 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
         </div>
 
         <div className="flex items-center gap-3">
+          <button
+            onClick={autoFitZoom}
+            className="text-xs text-muted hover:text-white transition-colors"
+            title="Auto-fit zoom"
+          >
+            <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+            </svg>
+          </button>
           <div className="flex items-center gap-2">
             <label className="text-xs text-muted">Zoom</label>
             <input
@@ -281,10 +334,6 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
             />
             <span className="text-xs text-muted w-8">{zoom}%</span>
           </div>
-
-          <Button variant="outline" size="sm" onClick={() => setVisible(false)}>
-            Hide
-          </Button>
         </div>
       </div>
 
