@@ -4,13 +4,18 @@ export default {
   theme: {
     extend: {
       colors: {
-        background: '#0a0a0f',
-        surface: '#13131a',
-        border: '#1e1e2e',
+        // Theme-dependent colors (use CSS variables)
+        background: 'var(--color-background)',
+        surface: 'var(--color-surface)',
+        card: 'var(--color-card)',
+        border: 'var(--color-border)',
+        foreground: 'var(--color-foreground)',
+        muted: 'var(--color-muted)',
+        'muted-foreground': 'var(--color-muted-foreground)',
+        
+        // Fixed colors (same in both themes)
         primary: '#6366f1',
         'primary-foreground': '#ffffff',
-        muted: '#64748b',
-        'muted-foreground': '#94a3b8',
         accent: '#4cc9f0',
         success: '#22c55e',
         warning: '#f59e0b',

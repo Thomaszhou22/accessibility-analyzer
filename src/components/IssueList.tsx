@@ -46,7 +46,7 @@ export default function IssueList({ result, onIssueClick }: IssueListProps) {
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
-                filter === f.key ? 'bg-primary/20 text-primary' : 'text-muted hover:text-white'
+                filter === f.key ? 'bg-primary/20 text-primary' : 'text-muted hover:text-foreground'
               }`}
             >
               {f.label} ({f.count})
@@ -106,7 +106,7 @@ function CopyButton({ code }: { code: string }) {
   return (
     <button
       onClick={handleCopy}
-      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-white hover:bg-white/10 transition-all"
+      className="shrink-0 w-7 h-7 flex items-center justify-center rounded-md text-muted hover:text-foreground hover:bg-white/10 transition-all"
       title="Copy code"
     >
       {copied ? (
@@ -196,7 +196,7 @@ function IssueRow({ issue, expanded, isSelected, onToggle, onLocate }: IssueRowP
             <Badge variant="default">WCAG {issue.wcagLevel}</Badge>
             <span className="text-xs text-muted font-mono">{issue.ruleId}</span>
           </div>
-          <h4 className="text-sm font-medium text-white">{issue.title}</h4>
+          <h4 className="text-sm font-medium text-foreground">{issue.title}</h4>
           {!expanded && <p className="text-xs text-muted mt-1 truncate">{issue.description}</p>}
         </div>
         <div className="flex items-center gap-2 shrink-0">

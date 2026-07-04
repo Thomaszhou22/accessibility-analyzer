@@ -11,7 +11,7 @@ interface ScanHistoryProps {
 
 function UrlDisplay({ url }: { url: string }) {
   return (
-    <div className="text-sm text-white group-hover:text-primary transition-colors min-w-0">
+    <div className="text-sm text-foreground group-hover:text-primary transition-colors min-w-0">
       <span className="truncate overflow-hidden whitespace-nowrap text-ellipsis block" title={url}>
         {url}
       </span>

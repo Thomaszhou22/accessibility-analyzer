@@ -23,7 +23,7 @@ export default function HeroModal({ open, onClose }: HeroModalProps) {
           {/* Close button */}
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-card/80 hover:bg-accent/20 flex items-center justify-center text-muted hover:text-white transition-colors z-10"
+            className="absolute top-4 right-4 w-8 h-8 rounded-full bg-card/80 hover:bg-accent/20 flex items-center justify-center text-muted hover:text-foreground transition-colors z-10"
             aria-label="Close"
           >
             <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -38,12 +38,12 @@ export default function HeroModal({ open, onClose }: HeroModalProps) {
               <h1 className="text-4xl md:text-5xl font-bold mb-3 bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent">
                 AccessScan
               </h1>
-              <p className="text-xl md:text-2xl text-white font-light mb-2">
+              <p className="text-xl md:text-2xl text-foreground font-light mb-2">
                 Make the web accessible for everyone
               </p>
               <p className="text-muted-foreground text-sm max-w-xl mx-auto leading-relaxed">
                 Over 1.6 billion people live with a disability. Yet
-                <span className="text-white font-semibold"> 96% of websites </span>
+                <span className="text-foreground font-semibold"> 96% of websites </span>
                 fail WCAG standards. AccessScan helps you find and fix these issues in seconds.
               </p>
             </div>
@@ -84,7 +84,7 @@ export default function HeroModal({ open, onClose }: HeroModalProps) {
             <div className="text-center">
               <button
                 onClick={onClose}
-                className="px-8 py-3 rounded-lg bg-gradient-to-r from-primary to-accent text-white font-semibold hover:opacity-90 transition-opacity"
+                className="px-8 py-3 rounded-lg bg-gradient-to-r from-primary to-accent text-foreground font-semibold hover:opacity-90 transition-opacity"
               >
                 Start Scanning
               </button>
@@ -112,7 +112,7 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode; titl
         {icon}
       </div>
       <div className="min-w-0">
-        <h3 className="text-sm font-semibold text-white mb-1">{title}</h3>
+        <h3 className="text-sm font-semibold text-foreground mb-1">{title}</h3>
         <p className="text-xs text-muted leading-relaxed">{description}</p>
       </div>
     </div>

@@ -309,12 +309,12 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
       {/* Toolbar */}
       <div className="flex items-center justify-between p-3 border-b border-border gap-3 flex-wrap">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-medium text-white">Preview</span>
+          <span className="text-xs font-medium text-foreground">Preview</span>
           <div className="flex items-center gap-1 bg-surface rounded-md p-0.5">
             <button
               onClick={() => setDevice('desktop')}
               className={`px-2 py-1 rounded text-xs transition-colors ${
-                device === 'desktop' ? 'bg-primary/20 text-primary' : 'text-muted hover:text-white'
+                device === 'desktop' ? 'bg-primary/20 text-primary' : 'text-muted hover:text-foreground'
               }`}
               title="Desktop view"
             >
@@ -325,7 +325,7 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
             <button
               onClick={() => setDevice('mobile')}
               className={`px-2 py-1 rounded text-xs transition-colors ${
-                device === 'mobile' ? 'bg-primary/20 text-primary' : 'text-muted hover:text-white'
+                device === 'mobile' ? 'bg-primary/20 text-primary' : 'text-muted hover:text-foreground'
               }`}
               title="Mobile view"
             >
@@ -339,7 +339,7 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
         <div className="flex items-center gap-3">
           <button
             onClick={autoFitZoom}
-            className="text-xs text-muted hover:text-white transition-colors"
+            className="text-xs text-muted hover:text-foreground transition-colors"
             title="Auto-fit zoom"
           >
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
