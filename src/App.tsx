@@ -263,6 +263,11 @@ export default function App() {
                 setActivity(addActivity(res))
                 setScoreLog(addScoreLog(res))
               }}
+              onViewBatchResult={(res) => {
+                setResult(res)
+                setShowPreview(!!res.html)
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
               loading={loading} 
             />
             <div className="flex justify-center mt-3 gap-4">

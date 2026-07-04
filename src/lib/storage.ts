@@ -243,6 +243,36 @@ export function clearFavorites(): void {
   }
 }
 
+const BATCH_KEY = 'a11y-batch-results'
+
+export function getBatchResults(): ScanResult[] {
+  try {
+    const raw = localStorage.getItem(BATCH_KEY)
+    if (!raw) return []
+    const parsed = JSON.parse(raw)
+    if (!Array.isArray(parsed)) return []
+    return parsed
+  } catch {
+    return []
+  }
+}
+
+export function saveBatchResults(results: ScanResult[]): void {
+  try {
+    localStorage.setItem(BATCH_KEY, JSON.stringify(results))
+  } catch {
+    // ignore
+  }
+}
+
+export function clearBatchResults(): void {
+  try {
+    localStorage.removeItem(BATCH_KEY)
+  } catch {
+    // ignore
+  }
+}
+
 export function formatRelativeTime(isoString: string): string {
   const now = Date.now()
   const then = new Date(isoString).getTime()

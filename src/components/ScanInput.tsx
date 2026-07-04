@@ -9,6 +9,7 @@ interface UrlInputProps {
   onScan: (url: string) => void
   onScanHtml: (html: string, sourceUrl?: string) => void
   onBatchScanComplete?: (result: ScanResult) => void
+  onViewBatchResult?: (result: ScanResult) => void
   loading: boolean
 }
 
@@ -21,7 +22,7 @@ function normaliseUrl(url: string): string {
   return trimmed
 }
 
-export default function ScanInput({ onScan, onScanHtml, onBatchScanComplete, loading }: UrlInputProps) {
+export default function ScanInput({ onScan, onScanHtml, onBatchScanComplete, onViewBatchResult, loading }: UrlInputProps) {
   const [url, setUrl] = useState('')
   const [showHtmlMode, setShowHtmlMode] = useState(false)
   const [html, setHtml] = useState('')
@@ -70,7 +71,7 @@ export default function ScanInput({ onScan, onScanHtml, onBatchScanComplete, loa
             Batch Scan
           </button>
         </div>
-        <BatchScan onScanComplete={onBatchScanComplete} />
+        <BatchScan onScanComplete={onBatchScanComplete} onViewResult={onViewBatchResult} />
       </div>
     )
   }

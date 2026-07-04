@@ -4,9 +4,11 @@ import { Card, CardContent } from '@/components/ui/Card'
 import type { ScanResult } from '@/engine/types'
 import { scanUrl } from '@/engine/scanner'
 import { fetchSitemap } from '@/lib/sitemap'
+import { getBatchResults, saveBatchResults } from '@/lib/storage'
 
 interface BatchScanProps {
   onScanComplete?: (result: ScanResult) => void
+  onViewResult?: (result: ScanResult) => void
 }
 
 interface BatchScanState {
@@ -19,17 +21,30 @@ interface BatchScanState {
   error: string | null
 }
 
-export default function BatchScan({ onScanComplete }: BatchScanProps) {
+export default function BatchScan({ onScanComplete, onViewResult }: BatchScanProps) {
   const [domain, setDomain] = useState('')
-  const [previewResult, setPreviewResult] = useState<ScanResult | null>(null)
-  const [state, setState] = useState<BatchScanState>({
-    status: 'idle',
-    urls: [],
-    results: [],
-    currentUrl: null,
-    progress: 0,
-    total: 0,
-    error: null,
+  const [state, setState] = useState<BatchScanState>(() => {
+    const saved = getBatchResults()
+    if (saved.length > 0) {
+      return {
+        status: 'complete',
+        urls: [],
+        results: saved,
+        currentUrl: null,
+        progress: saved.length,
+        total: saved.length,
+        error: null,
+      }
+    }
+    return {
+      status: 'idle',
+      urls: [],
+      results: [],
+      currentUrl: null,
+      progress: 0,
+      total: 0,
+      error: null,
+    }
   })
 
   const handleStartBatchScan = async () => {
@@ -98,6 +113,8 @@ export default function BatchScan({ onScanComplete }: BatchScanProps) {
         }
       }
 
+      saveBatchResults(results)
+
       setState((prev) => ({
         ...prev,
         status: 'complete',
@@ -116,6 +133,7 @@ export default function BatchScan({ onScanComplete }: BatchScanProps) {
 
   const handleReset = () => {
     setDomain('')
+    saveBatchResults([])
     setState({
       status: 'idle',
       urls: [],
@@ -128,47 +146,6 @@ export default function BatchScan({ onScanComplete }: BatchScanProps) {
   }
 
   const sortedResults = [...state.results].sort((a, b) => a.score - b.score)
-
-  // Preview mode
-  if (previewResult) {
-    return (
-      <Card className="w-full max-w-4xl mx-auto">
-        <CardContent className="p-4">
-          <div className="flex items-center justify-between mb-3">
-            <div className="min-w-0 flex-1">
-              <h3 className="text-sm font-semibold text-foreground truncate">{previewResult.url}</h3>
-              <p className="text-xs text-muted mt-0.5">
-                Score: {previewResult.score} · {previewResult.errors} errors · {previewResult.warnings} warnings
-              </p>
-            </div>
-            <Button onClick={() => setPreviewResult(null)} variant="outline" size="sm">
-              <span className="flex items-center gap-1.5">
-                <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                </svg>
-                Back to Results
-              </span>
-            </Button>
-          </div>
-          {previewResult.html ? (
-            <div className="rounded-lg overflow-hidden border border-border">
-              <iframe
-                srcDoc={previewResult.html}
-                className="w-full"
-                style={{ height: '70vh' }}
-                sandbox="allow-same-origin allow-scripts"
-                title="Preview"
-              />
-            </div>
-          ) : (
-            <div className="flex items-center justify-center py-12 text-sm text-muted">
-              No preview available for this page
-            </div>
-          )}
-        </CardContent>
-      </Card>
-    )
-  }
 
   return (
     <Card className="w-full max-w-4xl mx-auto">
@@ -273,9 +250,9 @@ export default function BatchScan({ onScanComplete }: BatchScanProps) {
           <div className="space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-lg font-semibold text-foreground mb-1">Batch Scan Complete</h3>
+                <h3 className="text-lg font-semibold text-foreground mb-1">Batch Scan Results</h3>
                 <p className="text-sm text-muted">
-                  Scanned {state.results.length} pages from {domain}
+                  {state.results.length} pages scanned{domain ? ` from ${domain}` : ''}
                 </p>
               </div>
               <Button onClick={handleReset} variant="outline" size="sm">
@@ -291,23 +268,16 @@ export default function BatchScan({ onScanComplete }: BatchScanProps) {
                     <th className="text-center py-2 px-3 text-muted font-medium">Score</th>
                     <th className="text-center py-2 px-3 text-muted font-medium">Errors</th>
                     <th className="text-center py-2 px-3 text-muted font-medium">Warnings</th>
-                    <th className="text-center py-2 px-3 text-muted font-medium">Issues</th>
-                    <th className="text-center py-2 px-3 text-muted font-medium">Preview</th>
+                    <th className="text-center py-2 px-3 text-muted font-medium"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {sortedResults.map((result, idx) => (
                     <tr key={idx} className="border-b border-border hover:bg-surface/50">
                       <td className="py-2 px-3">
-                        <a
-                          href={result.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline font-mono text-xs truncate block max-w-[260px]"
-                          title={result.url}
-                        >
+                        <span className="font-mono text-xs truncate block max-w-[260px]" title={result.url}>
                           {result.url}
-                        </a>
+                        </span>
                       </td>
                       <td className="py-2 px-3 text-center">
                         <span
@@ -330,16 +300,12 @@ export default function BatchScan({ onScanComplete }: BatchScanProps) {
                       <td className="py-2 px-3 text-center text-yellow-400 font-medium">
                         {result.warnings}
                       </td>
-                      <td className="py-2 px-3 text-center text-muted">
-                        {result.totalIssues}
-                      </td>
                       <td className="py-2 px-3 text-center">
                         <button
-                          onClick={() => setPreviewResult(result)}
-                          disabled={!result.html}
-                          className="text-xs text-primary hover:underline disabled:text-muted disabled:no-underline disabled:cursor-not-allowed"
+                          onClick={() => onViewResult?.(result)}
+                          className="text-xs text-primary hover:underline"
                         >
-                          {result.html ? 'View' : 'N/A'}
+                          View
                         </button>
                       </td>
                     </tr>
