@@ -42,9 +42,14 @@ async function fetchWithFallback(url: string): Promise<FetchResult | null> {
       if (!response.ok) continue
 
       const text = await response.text()
-      if (text && text.length > 50) {
-        return { text, strategy: proxy.name }
-      }
+      if (!text || text.length < 50) continue
+
+      // Detect SPA fallback (Vite dev server returns index.html for /api/* in dev)
+      if (text.includes('<div id="root"') || text.includes('<div id="root"')) continue
+      // Detect Vercel 404 JSON that's actually a 200 with error
+      if (text.startsWith('{') && text.includes('error')) continue
+
+      return { text, strategy: proxy.name }
     } catch {
       // try next proxy
     }
@@ -199,8 +204,71 @@ export async function fetchSitemap(domain: string): Promise<string[]> {
     }
   }
 
-  // Step 3: Last resort — use the domain root as a single URL
-  // This way batch scan at least scans the homepage
-  console.info(`[sitemap] No sitemap found, falling back to homepage scan`)
-  return [`https://${normalizedDomain}/`]
+  // Step 3: Fallback — crawl homepage for internal links
+  console.info('[sitemap] No sitemap found, crawling homepage for links')
+  const homeUrl = `https://${normalizedDomain}/`
+  const homeResult = await fetchWithFallback(homeUrl)
+  if (!homeResult) return [homeUrl]
+
+  const discovered = extractLinksFromHtml(homeResult.text, normalizedDomain)
+  if (discovered.length === 0) return [homeUrl]
+
+  // Always include homepage + discovered pages
+  const finalUrls = [homeUrl, ...discovered].slice(0, MAX_URLS)
+  console.info(`[sitemap] Discovered ${finalUrls.length} URLs from homepage links`)
+  return finalUrls
+}
+
+/** Extract same-origin links from HTML */
+function extractLinksFromHtml(html: string, domain: string): string[] {
+  const urls: string[] = []
+  const seen = new Set<string>()
+
+  try {
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    const anchors = doc.querySelectorAll('a[href]')
+
+    for (const a of anchors) {
+      const href = a.getAttribute('href')
+      if (!href) continue
+
+      // Skip fragments, javascript:, mailto:, tel:, etc.
+      if (/^(#|javascript:|mailto:|tel:|data:)/i.test(href)) continue
+
+      let fullUrl: string
+      try {
+        // Resolve relative URLs against the domain
+        fullUrl = new URL(href, `https://${domain}/`).href
+      } catch {
+        continue
+      }
+
+      // Must be same domain
+      let parsed: URL
+      try { parsed = new URL(fullUrl) } catch { continue }
+      if (parsed.hostname !== domain && !parsed.hostname.endsWith(`.${domain}`)) continue
+
+      // Must be http(s)
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') continue
+
+      // Skip assets and non-page URLs
+      if (/\.(jpg|jpeg|png|gif|svg|css|js|ico|woff|woff2|ttf|eot|pdf|zip|rar|exe|dmg|mp4|mp3|avi|mov)(\?|#|$)/i.test(parsed.pathname)) continue
+
+      // Normalize: remove fragment
+      parsed.hash = ''
+      const clean = parsed.href
+
+      if (!seen.has(clean)) {
+        seen.add(clean)
+        urls.push(clean)
+      }
+
+      if (urls.length >= MAX_URLS - 1) break
+    }
+  } catch {
+    // ignore parse errors
+  }
+
+  return urls
 }
