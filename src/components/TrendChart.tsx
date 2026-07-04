@@ -31,18 +31,6 @@ function getDateStr(date: Date): string {
 export default function TrendChart({ activity }: TrendChartProps) {
   const [tooltip, setTooltip] = useState<{ text: string; x: number; y: number } | null>(null)
 
-  if (activity.length === 0) {
-    return (
-      <Card className="w-full max-w-2xl mx-auto mt-4">
-        <CardContent className="p-4 text-center">
-          <p className="text-xs text-muted">
-            Start scanning to see your activity
-          </p>
-        </CardContent>
-      </Card>
-    )
-  }
-
   // Count scans per day
   const scanCounts: Record<string, number> = {}
   for (const entry of activity) {
