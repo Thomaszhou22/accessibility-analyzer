@@ -24,7 +24,14 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
   const [showHtmlMode, setShowHtmlMode] = useState(false)
   const [html, setHtml] = useState('')
   const [sourceUrl, setSourceUrl] = useState('')
-  const [scanMode, setScanMode] = useState<'single' | 'batch'>('single')
+  const [scanMode, setScanMode] = useState<'single' | 'batch'>(() => {
+    try { return localStorage.getItem('accessscan-mode') as 'single' | 'batch' || 'single' } catch { return 'single' }
+  })
+
+  const switchMode = (mode: 'single' | 'batch') => {
+    setScanMode(mode)
+    try { localStorage.setItem('accessscan-mode', mode) } catch {}
+  }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
@@ -50,7 +57,7 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
         {/* Mode toggle */}
         <div className="flex items-center justify-center gap-2">
           <button
-            onClick={() => setScanMode('single')}
+            onClick={() => switchMode('single')}
             className="text-sm font-medium px-4 py-2 rounded-lg transition-colors bg-surface text-muted hover:text-foreground"
           >
             Single Page
@@ -76,7 +83,7 @@ export default function ScanInput({ onScan, onScanHtml, loading }: UrlInputProps
           Single Page
         </button>
         <button
-          onClick={() => setScanMode('batch')}
+          onClick={() => switchMode('batch')}
           className="text-sm font-medium px-4 py-2 rounded-lg transition-colors bg-surface text-muted hover:text-foreground"
         >
           Batch Scan
