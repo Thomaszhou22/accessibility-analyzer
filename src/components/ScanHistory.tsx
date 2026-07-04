@@ -23,8 +23,6 @@ function UrlDisplay({ url }: { url: string }) {
 }
 
 export default function ScanHistory({ history, onSelect, onRemove, onClear, onClose, onToggleFavorite, isFavorited }: ScanHistoryProps) {
-  if (history.length === 0) return null
-
   return (
     <Card id="scan-history" className="w-full max-w-2xl mx-auto mt-4 overflow-hidden">
       <CardContent className="p-4">
@@ -33,12 +31,14 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onCl
             Recent Scans
           </h3>
           <div className="flex items-center gap-3">
-            <button
-              onClick={onClear}
-              className="text-xs text-muted hover:text-danger transition-colors"
-            >
-              Clear all
-            </button>
+            {history.length > 0 && (
+              <button
+                onClick={onClear}
+                className="text-xs text-muted hover:text-danger transition-colors"
+              >
+                Clear all
+              </button>
+            )}
             <button
               onClick={onClose}
               className="text-xs text-muted hover:text-foreground transition-colors"
@@ -47,6 +47,11 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onCl
             </button>
           </div>
         </div>
+        {history.length === 0 ? (
+          <p className="text-sm text-muted text-center py-4">
+            No scans yet. Run a scan to see it here.
+          </p>
+        ) : (
         <div className="space-y-1">
           {history.map((entry, i) => (
             <div
@@ -110,6 +115,7 @@ export default function ScanHistory({ history, onSelect, onRemove, onClear, onCl
             </div>
           ))}
         </div>
+        )}
       </CardContent>
     </Card>
   )
