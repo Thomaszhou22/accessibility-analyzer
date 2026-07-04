@@ -42,7 +42,6 @@ Enter any URL and get an instant accessibility score with detailed issue breakdo
 - **Score System** — 0–100 score with A/AA/AAA grading
 - **Export PDF** — one-click printable report with fix recommendations
 
-<!-- placeholder: single-page-scan -->
 
 ### Batch Scan
 
@@ -53,7 +52,6 @@ Scan an entire website at once — up to 20 pages in one run.
 - **Sorted Results Table** — pages ranked by score, worst first
 - **Click to View** — jump into any page's full report with issues and preview
 
-<!-- placeholder: batch-scan -->
 
 ### Scan History & Favorites
 
@@ -63,7 +61,6 @@ Scan an entire website at once — up to 20 pages in one run.
 - **Score Trend per URL** — track how a page's score changes over time
 - **Independent Storage** — clearing Recent Scans does not affect Activity, Favorites, or Score History
 
-<!-- placeholder: history-favorites -->
 
 ### Issue Highlighting
 
@@ -74,7 +71,6 @@ Click any issue in the report to highlight the problematic element directly in t
 - WCAG criteria reference (e.g., 1.1.1 Non-text Content)
 - Concrete fix recommendation with code example
 
-<!-- placeholder: issue-highlight -->
 
 ---
 
@@ -82,37 +78,17 @@ Click any issue in the report to highlight the problematic element directly in t
 
 ### Home Page (Initial State)
 
-> _Placeholder — send screenshot to replace_
-
 ![Home Page — Initial State](./screenshots/home-initial.png)
 
 ### Single Page Scan Results
-
-> _Placeholder — send screenshot to replace_
 
 ![Single Page Scan Results](./screenshots/single-page-results.png)
 
 ### Batch Scan Results
 
-> _Placeholder — send screenshot to replace_
-
 ![Batch Scan Results](./screenshots/batch-scan-results.png)
 
-### Scan Activity Heatmap
-
-> _Placeholder — send screenshot to replace_
-
-![Scan Activity Heatmap](./screenshots/scan-activity.png)
-
-### Issue Highlighting in Preview
-
-> _Placeholder — send screenshot to replace_
-
-![Issue Highlighting](./screenshots/issue-highlight.png)
-
 ### Favorites & Recent Scans
-
-> _Placeholder — send screenshot to replace_
 
 ![Favorites and Recent Scans](./screenshots/favorites-history.png)
 
