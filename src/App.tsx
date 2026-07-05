@@ -255,24 +255,23 @@ export default function App() {
           </div>
         )}
 
-        {!result && (
-          <>
-            <ScanInput 
-              onScan={handleScanUrl} 
-              onScanHtml={handleScanHtml} 
-              onBatchScanComplete={(res) => {
-                setHistory(addToHistory(res))
-                setActivity(addActivity(res))
-                setScoreLog(addScoreLog(res))
-              }}
-              onViewBatchResult={(res) => {
-                setResult(res)
-                setBatchViewSource(true)
-                setShowPreview(!!res.html)
-                window.scrollTo({ top: 0, behavior: 'smooth' })
-              }}
-              loading={loading} 
-            />
+        <div className={!result ? '' : 'hidden'}>
+          <ScanInput 
+            onScan={handleScanUrl} 
+            onScanHtml={handleScanHtml} 
+            onBatchScanComplete={(res) => {
+              setHistory(addToHistory(res))
+              setActivity(addActivity(res))
+              setScoreLog(addScoreLog(res))
+            }}
+            onViewBatchResult={(res) => {
+              setResult(res)
+              setBatchViewSource(true)
+              setShowPreview(!!res.html)
+              window.scrollTo({ top: 0, behavior: 'smooth' })
+            }}
+            loading={loading} 
+          />
             <div className="flex justify-center mt-3 gap-4">
               <button
                 onClick={() => {
@@ -343,8 +342,7 @@ export default function App() {
             )}
             {/* Scan Activity Heatmap - always visible */}
             <TrendChart activity={activity} />
-          </>
-        )}
+          </div>
 
         {error && (
           <div className="mt-4 p-4 rounded-lg bg-danger/10 border border-danger/30 text-sm text-danger">
