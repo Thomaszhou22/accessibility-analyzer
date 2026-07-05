@@ -28,6 +28,7 @@ export default function App() {
   const [history, setHistory] = useState<HistoryEntry[]>([])
   const [showHistory, setShowHistory] = useState(false)
   const [showFavorites, setShowFavorites] = useState(false)
+  const [batchViewSource, setBatchViewSource] = useState(false)
   const [favorites, setFavorites] = useState<HistoryEntry[]>([])
   const [activity, setActivity] = useState<ActivityEntry[]>([])
   const [scoreLog, setScoreLog] = useState<ScoreLogEntry[]>([])
@@ -114,6 +115,7 @@ export default function App() {
 
   const handleReset = () => {
     setResult(null)
+    setBatchViewSource(false)
     setError(null)
     setHighlightSelector(null)
     setHighlightLabel(null)
@@ -265,6 +267,7 @@ export default function App() {
               }}
               onViewBatchResult={(res) => {
                 setResult(res)
+                setBatchViewSource(true)
                 setShowPreview(!!res.html)
                 window.scrollTo({ top: 0, behavior: 'smooth' })
               }}
@@ -413,6 +416,14 @@ export default function App() {
                 <Button variant="outline" size="sm" onClick={handleExportPdf}>
                   Export PDF
                 </Button>
+                {batchViewSource && (
+                  <Button variant="outline" size="sm" onClick={() => {
+                    setResult(null)
+                    setBatchViewSource(false)
+                  }}>
+                    Back to Batch Scan
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" onClick={handleReset}>
                   New Scan
                 </Button>
