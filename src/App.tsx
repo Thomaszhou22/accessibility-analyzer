@@ -430,8 +430,8 @@ export default function App() {
 
             <ScorePanel result={result} />
 
-            {/* Per-URL score history chart */}
-            {(() => {
+            {/* Per-URL score history chart — only for favorited URLs with score changes */}
+            {isFavorited(result.url) && (() => {
               const urlScores = scoreLog.filter(e => e.url === result.url)
               if (urlScores.length < 2) return false
               const uniqueScores = new Set(urlScores.map(e => e.score))

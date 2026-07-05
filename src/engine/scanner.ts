@@ -2,19 +2,20 @@ import type { ScanResult, Issue, IssueLevel } from './types'
 import { rules } from './rules'
 
 /**
- * Calculate an accessibility score based on issue counts.
- * Formula: 100 - min(errors*10,80) - min(warnings*4,30) - min(infos*1,10), clamped to [0, 100].
+ * Calculate an accessibility score using logarithmic decay.
+ * A few errors are forgiving, but many errors quickly approach 0.
+ * Error deduction: log2(errors+1) * 20, capped at 100
+ * Warning deduction: log2(warnings+1) * 5, capped at 20
+ * Info deduction: min(infos, 5)
  */
 function calculateScore(
   errors: number,
   warnings: number,
   infos: number
 ): number {
-  // Cap the deduction so very large pages don't all hit 0.
-  // Each error deducts 10 (capped at 80), each warning 4 (capped at 30), each info 1 (capped at 10).
-  const errorDeduction = Math.min(errors * 10, 80)
-  const warningDeduction = Math.min(warnings * 4, 30)
-  const infoDeduction = Math.min(infos * 1, 10)
+  const errorDeduction = errors > 0 ? Math.min(Math.round(Math.log2(errors + 1) * 20), 100) : 0
+  const warningDeduction = warnings > 0 ? Math.min(Math.round(Math.log2(warnings + 1) * 5), 20) : 0
+  const infoDeduction = Math.min(infos, 5)
   const score = 100 - errorDeduction - warningDeduction - infoDeduction
   return Math.max(0, Math.min(100, score))
 }
