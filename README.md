@@ -4,7 +4,7 @@
 
 Over 1.6 billion people live with a disability. Yet 96% of websites fail WCAG standards. AccessScan helps developers find and fix these issues — no installation, no dependencies, just open and scan.
 
-**Live Demo:** [accessibility-analyzer.vercel.app](https://accessibility-analyzer-sable.vercel.app)
+**Live Demo:** [accessibility-analyzer-phi.vercel.app](https://accessibility-analyzer-phi.vercel.app)
 
 ---
 
