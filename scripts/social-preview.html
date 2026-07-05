@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { width: 1280px; height: 640px; overflow: hidden; }
+.card {
+  width: 1280px; height: 640px;
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 50%, #16123d 100%);
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  position: relative;
+}
+.card::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: radial-gradient(circle at 30% 50%, rgba(139, 92, 246, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 70% 50%, rgba(20, 184, 166, 0.05) 0%, transparent 50%);
+}
+.logo {
+  font-size: 72px; font-weight: 800; color: #ffffff;
+  letter-spacing: -2px; margin-bottom: 8px;
+  position: relative; z-index: 1;
+}
+.logo .accent { color: #8b5cf6; }
+.tagline {
+  font-size: 28px; color: #a1a1b5; font-weight: 500;
+  margin-bottom: 12px; position: relative; z-index: 1;
+}
+.subtitle {
+  font-size: 20px; color: #6b6b80; font-weight: 400;
+  margin-bottom: 48px; position: relative; z-index: 1;
+}
+.badges {
+  display: flex; gap: 24px; position: relative; z-index: 1;
+}
+.badge {
+  display: flex; align-items: center; gap: 8px;
+  padding: 12px 24px; border-radius: 8px;
+  background: rgba(139, 92, 246, 0.1);
+  border: 1px solid rgba(139, 92, 246, 0.2);
+  color: #c4b5fd; font-size: 18px; font-weight: 600;
+}
+.badge .dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: #8b5cf6;
+}
+.badge:nth-child(2) .dot { background: #14b8a6; }
+.badge:nth-child(3) .dot { background: #f59e0b; }
+.badge:nth-child(4) .dot { background: #ef4444; }
+.footer {
+  position: absolute; bottom: 32px; left: 0; right: 0;
+  text-align: center; color: #4a4a5e; font-size: 16px;
+}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo"><span class="accent">A</span>ccessScan</div>
+  <div class="tagline">Web Accessibility Scanner</div>
+  <div class="subtitle">Scan any website for WCAG 2.1 issues in seconds</div>
+  <div class="badges">
+    <div class="badge"><span class="dot"></span>20 WCAG Rules</div>
+    <div class="badge"><span class="dot"></span>Live Preview</div>
+    <div class="badge"><span class="dot"></span>Batch Scan</div>
+    <div class="badge"><span class="dot"></span>PDF Export</div>
+  </div>
+  <div class="footer">React + TypeScript + Tailwind CSS</div>
+</div>
+</body>
+</html>
