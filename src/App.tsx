@@ -422,7 +422,12 @@ export default function App() {
             <ScorePanel result={result} />
 
             {/* Per-URL score history chart */}
-            {scoreLog.filter(e => e.url === result.url).length >= 2 && (
+            {(() => {
+              const urlScores = scoreLog.filter(e => e.url === result.url)
+              if (urlScores.length < 2) return false
+              const uniqueScores = new Set(urlScores.map(e => e.score))
+              return uniqueScores.size >= 2
+            })() && (
               <UrlScoreHistory url={result.url} scoreLog={scoreLog} />
             )}
 
