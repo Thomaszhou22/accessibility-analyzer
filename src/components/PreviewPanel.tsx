@@ -353,7 +353,7 @@ export default function PreviewPanel({ html, baseUrl, highlightSelector, highlig
       </div>
 
       {/* Iframe container */}
-      <div ref={containerRef} className="flex-1 overflow-auto bg-white relative" style={{ minHeight: '400px' }}>
+      <div ref={containerRef} className={`flex-1 overflow-auto relative transition-colors duration-200 ${highlightSelector ? 'bg-neutral-900' : 'bg-white'}`} style={{ minHeight: '400px' }}>
         <div
           className="mx-auto h-full transition-all duration-300"
           style={{ width: deviceWidth, maxWidth: '100%' }}
