@@ -6,6 +6,8 @@ Over 1.6 billion people live with a disability. Yet 96% of websites fail WCAG st
 
 **Live Demo:** [accessibility-analyzer-phi.vercel.app](https://accessibility-analyzer-phi.vercel.app)
 
+**English** | **[中文](README.zh-CN.md)**
+
 ---
 
 ## Table of Contents
